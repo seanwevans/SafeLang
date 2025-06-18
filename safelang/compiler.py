@@ -37,13 +37,13 @@ _RUST_TYPE_MAP = {
 _PARAM_RE = re.compile(r"(\w+)\(([^)]+)\)")
 
 
-
 def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
     """Parse parameters from consume block lines.
 
     ``type_map`` controls the type names and ``style`` selects
     formatting ("c" or "rust").
     """
+
 
 def _parse_space(space: str) -> int:
     match = re.match(r"([0-9_]+)B", space)
@@ -122,4 +122,4 @@ def generate_rust(funcs: List[FunctionDef]) -> str:
     return "\n".join(lines)
 
 
-__all__ = ["generate_c", "generate_rust","compile_to_nasm"]
+__all__ = ["generate_c", "generate_rust", "compile_to_nasm"]
