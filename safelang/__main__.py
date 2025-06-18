@@ -16,7 +16,11 @@ def main() -> int:
     except (FileNotFoundError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
-    funcs = parse_functions(text)
+    try:
+        funcs = parse_functions(text)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     errors = verify_contracts(funcs)
 
     if errors:
