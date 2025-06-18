@@ -1,4 +1,5 @@
 """Minimal NASM compiler for SafeLang functions."""
+
 """Simple SafeLang to C code generator."""
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ _TYPE_MAP = {
 }
 
 _PARAM_RE = re.compile(r"(\w+)\(([^)]+)\)")
+
 
 def _parse_space(space: str) -> int:
     match = re.match(r"([0-9_]+)B", space)
@@ -53,8 +55,6 @@ def compile_to_nasm(funcs: List[FunctionDef]) -> str:
         lines.append("    ret")
 
 
-
-
 def _parse_params(lines: List[str]) -> List[str]:
     params = []
     for ln in lines:
@@ -84,4 +84,3 @@ def generate_c(funcs: List[FunctionDef]) -> str:
 
 
 __all__ = ["compile_to_nasm", "generate_c"]
-
