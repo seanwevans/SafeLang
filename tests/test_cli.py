@@ -33,11 +33,15 @@ def test_cli_invalid(tmp_path):
 
 def test_cli_parse_error(tmp_path):
     invalid_src = 'function "foo" {'
-    invalid_file = tmp_path / 'bad.slang'
+    invalid_file = tmp_path / "bad.slang"
     invalid_file.write_text(invalid_src)
-    result = subprocess.run([sys.executable, '-m', 'safelang', str(invalid_file)], capture_output=True, text=True)
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", str(invalid_file)],
+        capture_output=True,
+        text=True,
+    )
     assert result.returncode != 0
-    assert 'ERROR' in result.stderr
+    assert "ERROR" in result.stderr
 
 
 def test_cli_missing_file(tmp_path):
