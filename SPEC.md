@@ -32,6 +32,7 @@ This document outlines the formal specification of SafeLang's type system, synta
 | `float64` | 64-bit float    | IEEE-754           |
 
 All arithmetic on integer types is **saturating** and implemented via **upcast + clamp**.
+If clamping would occur at runtime, a ``SaturatingOverflow`` exception is raised.
 
 ### Compound Types
 

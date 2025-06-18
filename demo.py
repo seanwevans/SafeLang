@@ -1,6 +1,11 @@
 """Demonstration of the SafeLang parser and saturating math."""
 
-from safelang import parse_functions, verify_contracts, sat_add
+from safelang import (
+    parse_functions,
+    verify_contracts,
+    sat_add,
+    SaturatingOverflow,
+)
 
 
 def main() -> None:
@@ -19,8 +24,11 @@ def main() -> None:
     else:
         print("No contract errors found")
 
-    value, saturated = sat_add(2147483640, 100, 32, signed=True)
-    print(f"sat_add result={value} saturated={saturated}")
+    try:
+        value = sat_add(2147483640, 100, 32, signed=True)
+        print(f"sat_add result={value}")
+    except SaturatingOverflow as exc:
+        print(f"Overflow occurred: {exc}")
 
 
 if __name__ == "__main__":

@@ -72,6 +72,8 @@ function "adjust_thrust" {
 
 * All arithmetic operations are saturating by default
 * Arithmetic is performed using a **widened type**, then clamped to the original type's bounds
+* The Python demo runtime raises ``SaturatingOverflow`` if a value would need to
+  be clamped
 
 ```c
 int32 sat_add(int32 a, int32 b)
@@ -95,9 +97,62 @@ int32 sat_add(int32 a, int32 b)
 ## Runtime Behavior
 
 * Saturating arithmetic is deterministic and portable
-* Overflow never wraps
+* Overflow never wraps and triggers a ``SaturatingOverflow`` exception
 * All failures (e.g., time/space overrun, assertion fail) result in predictable halt or fallback
+
+
+## CLI Usage
+
+The repository includes a minimal demo verifier that you can run directly with Python.
+
+1. Execute the package on a SafeLang source file:
+
+   ```bash
+   python -m safelang example.slang
+   ```
+
+   Example output:
+
+   ```
+   Parsed 2 functions successfully.
+   ```
+
+   If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, the CLI prints `ERROR:` messages and exits with a non‑zero status.
+
+2. Alternatively, run the demonstration script which also showcases saturating arithmetic:
+
+   ```bash
+   python demo.py
+   ```
+
+   Example output:
+
+   ```
+   Parsed functions:
+   - clamp_params_init (space=512B, time=10_000ns)
+   - clamp_params (space=128B, time=1000ns)
+   No contract errors found
+   sat_add result=2147483647 saturated=True
+   ```
+
+=======
+
+## Running Tests
+
+Install pytest and execute the suite:
+
+```bash
+python -m pip install pytest
+pytest
+```
+
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
 For information on the compiler internals and verification agents, see [AGENTS.md](AGENTS.md).
+
+
