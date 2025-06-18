@@ -116,6 +116,9 @@ def parse_functions(text: str) -> List[FunctionDef]:
         if line_san.startswith("@init"):
             flagged_init = True
             i += 1
+            # Skip any blank or comment-only lines between @init and the function
+            while i < len(san_lines) and san_lines[i].strip() == "":
+                i += 1
             if i >= len(san_lines):
                 raise ValueError("@init must be followed by a function definition")
             line_san = san_lines[i].strip()
