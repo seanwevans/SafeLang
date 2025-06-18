@@ -4,11 +4,13 @@ import argparse
 from pathlib import Path
 import sys
 from .parser import parse_functions, verify_contracts
+from .compiler import compile_to_nasm
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="SafeLang demo verifier")
     parser.add_argument("file", type=Path, help="Path to SafeLang source")
+    parser.add_argument("--nasm", type=Path, help="Write NASM output to file")
     args = parser.parse_args()
 
     try:
@@ -29,6 +31,14 @@ def main() -> int:
         return 1
 
     print(f"Parsed {len(funcs)} functions successfully.")
+
+    if args.nasm:
+        asm = compile_to_nasm(funcs)
+        try:
+            args.nasm.write_text(asm)
+        except OSError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 1
     return 0
 
 
