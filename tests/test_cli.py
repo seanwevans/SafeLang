@@ -23,3 +23,10 @@ def test_cli_invalid(tmp_path):
     result = subprocess.run([sys.executable, '-m', 'safelang', str(invalid_file)], capture_output=True, text=True)
     assert result.returncode != 0
     assert 'ERROR' in result.stdout
+
+
+def test_cli_missing_file(tmp_path):
+    missing = tmp_path / 'does_not_exist.slang'
+    result = subprocess.run([sys.executable, '-m', 'safelang', str(missing)], capture_output=True, text=True)
+    assert result.returncode != 0
+    assert 'ERROR' in result.stderr
