@@ -37,13 +37,20 @@ _RUST_TYPE_MAP = {
 _PARAM_RE = re.compile(r"(\w+)\(([^)]+)\)")
 
 
-
 def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
-    """Parse parameters from consume block lines.
-
-    ``type_map`` controls the type names and ``style`` selects
-    formatting ("c" or "rust").
-    """
+    """Parse parameters from ``consume`` block lines."""
+    params: List[str] = []
+    for ln in lines:
+        match = _PARAM_RE.search(ln)
+        if not match:
+            continue
+        typ, name = match.group(1), match.group(2)
+        mapped = type_map.get(typ, "int")
+        if style == "c":
+            params.append(f"{mapped} {name}")
+        else:  # rust
+            params.append(f"{name}: {mapped}")
+    return params
 
 def _parse_space(space: str) -> int:
     match = re.match(r"([0-9_]+)B", space)
@@ -75,20 +82,7 @@ def compile_to_nasm(funcs: List[FunctionDef]) -> str:
         lines.append("    pop rbp")
         lines.append("    ret")
 
-
-def _parse_params(lines: List[str]) -> List[str]:
-    params = []
-    for ln in lines:
-        m = _PARAM_RE.search(ln)
-        if not m:
-            continue
-        typ, name = m.group(1), m.group(2)
-        mapped = type_map.get(typ, "int")
-        if style == "c":
-            params.append(f"{mapped} {name}")
-        else:  # rust
-            params.append(f"{name}: {mapped}")
-    return params
+    return "\n".join(lines)
 
 
 def generate_c(funcs: List[FunctionDef]) -> str:

@@ -4,9 +4,7 @@ import argparse
 from pathlib import Path
 import sys
 from .parser import parse_functions, verify_contracts
-from .compiler import generate_c, generate_rust
-from .compiler import compile_to_nasm
-from .compiler import generate_c
+from .compiler import compile_to_nasm, generate_c, generate_rust
 
 
 def main() -> int:
@@ -42,8 +40,6 @@ def main() -> int:
         for e in errors:
             print(f"ERROR: {e}")
         return 1
-
-    print(f"Parsed {len(funcs)} functions successfully.")
 
     if args.nasm:
         asm = compile_to_nasm(funcs)
