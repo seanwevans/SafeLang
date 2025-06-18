@@ -7,6 +7,7 @@ from .parser import parse_functions, verify_contracts
 
 
 def main() -> int:
+    """Parse CLI arguments and verify a SafeLang source file."""
     parser = argparse.ArgumentParser(description="SafeLang demo verifier")
     parser.add_argument("file", type=Path, help="Path to SafeLang source")
     args = parser.parse_args()

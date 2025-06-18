@@ -7,6 +7,7 @@ from typing import List
 
 @dataclass
 class FunctionDef:
+    """Container for a parsed function's metadata and contracts."""
     name: str
     space: str
     time: str
@@ -191,6 +192,7 @@ def parse_functions(text: str) -> List[FunctionDef]:
 
 
 def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
+    """Check each parsed function for required annotations and limits."""
     errors = []
     init_count = 0
     for fn in funcs:
