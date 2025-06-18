@@ -2,20 +2,20 @@ import pytest
 
 from safelang.parser import parse_functions
 
-EXAMPLE_TEXT = open('example.slang').read()
+EXAMPLE_TEXT = open("example.slang").read()
 
 
 def test_parse_example():
     funcs = parse_functions(EXAMPLE_TEXT)
     assert len(funcs) == 2
     names = [f.name for f in funcs]
-    assert 'clamp_params_init' in names
-    assert 'clamp_params' in names
+    assert "clamp_params_init" in names
+    assert "clamp_params" in names
 
 
 def test_init_without_function():
     with pytest.raises(ValueError):
-        parse_functions('@init')
+        parse_functions("@init")
 
 
 def test_unterminated_block():

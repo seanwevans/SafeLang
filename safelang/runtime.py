@@ -14,9 +14,9 @@ def bounds(bits: int, signed: bool) -> Tuple[int, int]:
 
     if signed:
         max_val = 2 ** (bits - 1) - 1
-        min_val = -2 ** (bits - 1)
+        min_val = -(2 ** (bits - 1))
     else:
-        max_val = 2 ** bits - 1
+        max_val = 2**bits - 1
         min_val = 0
     return min_val, max_val
 

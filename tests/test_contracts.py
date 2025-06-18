@@ -2,12 +2,13 @@ from safelang.parser import parse_functions, verify_contracts
 
 BASE_INIT = (
     '@init\nfunction "init" {\n'
-    '@space 1B\n'
-    '@time 1ns\n'
-    'consume { nil }\n'
-    'emit { nil }\n'
-    '}\n'
+    "@space 1B\n"
+    "@time 1ns\n"
+    "consume { nil }\n"
+    "emit { nil }\n"
+    "}\n"
 )
+
 
 def _verify(src: str, include_init: bool = True):
     if include_init:

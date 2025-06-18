@@ -126,17 +126,21 @@ def parse_functions(text: str) -> List[FunctionDef]:
         if line_san.startswith("function "):
             name_match = re.match(r"function\s+\"([^\"]+)\"", line_orig)
             if not name_match:
-                raise ValueError(f"Malformed function declaration at line {i + 1}: {line_orig}")
+                raise ValueError(
+                    f"Malformed function declaration at line {i + 1}: {line_orig}"
+                )
             name = name_match.group(1)
 
             start_pos = offsets[i]
-            next_open = sanitized.find('{', start_pos)
-            next_close = sanitized.find('}', start_pos)
+            next_open = sanitized.find("{", start_pos)
+            next_close = sanitized.find("}", start_pos)
             if next_close != -1 and (next_open == -1 or next_close < next_open):
-                error_line = sanitized.count('\n', 0, next_close) + 1
+                error_line = sanitized.count("\n", 0, next_close) + 1
                 raise ValueError(f"Unmatched closing brace at line {error_line}")
             if next_open == -1:
-                raise ValueError(f"Unterminated function block starting at line {i + 1}")
+                raise ValueError(
+                    f"Unterminated function block starting at line {i + 1}"
+                )
 
             end_pos = _find_matching_brace(sanitized, next_open)
             body = text[next_open + 1 : end_pos]
@@ -175,7 +179,7 @@ def parse_functions(text: str) -> List[FunctionDef]:
                 )
             )
 
-            i = sanitized.count('\n', 0, end_pos) + 1
+            i = sanitized.count("\n", 0, end_pos) + 1
             continue
 
         i += 1
