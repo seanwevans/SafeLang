@@ -8,7 +8,7 @@ The SafeLang compiler is structured as an **adversarial verification system**, c
 
 > Every line of code is guilty until proven safe.
 
-Each agent represents a specialized verifier or attack vector against your assumptions. The collective goal is to simulate real-world failures, edge conditions, hardware faults, and logic gaps before your system ever leaves the ground.
+Each agent represents a specialized verifier or attack vector against your assumptions. The collective goal is to simulate real-world failures, edge conditions, hardware faults, and logic gaps before your system ever deploys.
 
 ---
 
@@ -48,7 +48,7 @@ Each agent represents a specialized verifier or attack vector against your assum
 ### 7. **Function Contract Checker**
 
 * Verifies domain constraints from `consume` and `emit` blocks
-* Ensures all return values are consumed or explicitly discarded with `@discard` tag
+* Ensures all return values are consumed
 
 ### 8. **Time/Space Budget Analyzer**
 
@@ -86,6 +86,10 @@ Generates hardware watchdog fallback logic if time budgets are overrun
 ### - **Trace Generator**
 
 Captures falsification traces for external replay/fuzz testing
+
+### - ** Formal Prover**
+
+Generates a formal proof of the program's correctness in Coq
 
 ---
 
