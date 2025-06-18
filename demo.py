@@ -4,7 +4,6 @@ from safelang import (
     parse_functions,
     verify_contracts,
     sat_add,
-    SaturatingOverflow,
 )
 
 
@@ -24,11 +23,8 @@ def main() -> None:
     else:
         print("No contract errors found")
 
-    try:
-        value = sat_add(2147483640, 100, 32, signed=True)
-        print(f"sat_add result={value}")
-    except SaturatingOverflow as exc:
-        print(f"Overflow occurred: {exc}")
+    value, saturated = sat_add(2147483640, 100, 32, signed=True)
+    print(f"sat_add result={value} saturated={saturated}")
 
 
 if __name__ == "__main__":
