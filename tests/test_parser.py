@@ -34,3 +34,15 @@ def test_nested_braces():
     src = 'function "foo" { if { } }'
     funcs = parse_functions(src)
     assert len(funcs) == 1
+
+
+def test_braces_in_comment():
+    src = 'function "foo" { ! { comment }\n }'
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
+
+
+def test_braces_in_string():
+    src = 'function "foo" { msg = "{ not a brace }" }'
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
