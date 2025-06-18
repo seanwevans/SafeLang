@@ -22,7 +22,7 @@ The SafeLang compiler is not your assistant. It is your adversary. It attempts t
 ### Memory Management
 
 * No dynamic allocation after initialization
-* A mandatory `@init` function performs setup-time allocation and must run before other code
+* Exactly one `@init` function performs setup-time allocation and must run before other code
 
 ### Function Structure
 

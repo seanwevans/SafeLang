@@ -140,7 +140,7 @@ import "hardware"
 
 * `@time Nns`  — per-function time budget
 * `@space NB`  — total stack and local memory
-* `@init` — required setup phase permitting limited dynamic alloc
+* `@init` — exactly one function marked with this attribute performs required setup-time allocation
 
 ---
 
