@@ -3,9 +3,7 @@ from pathlib import Path
 
 from safelang.parser import parse_functions
 
-EXAMPLE_TEXT = (
-    Path(__file__).resolve().parents[1].joinpath("example.slang").read_text()
-)
+EXAMPLE_TEXT = Path(__file__).resolve().parents[1].joinpath("example.slang").read_text()
 
 
 def test_parse_example():
