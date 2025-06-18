@@ -79,6 +79,8 @@ function "adjust_thrust" {
 
 The runtime exposes helpers `sat_add`, `sat_sub`, `sat_mul`, `sat_div`, and
 `sat_mod` implementing these semantics.
+A portable C implementation of these helpers is available under
+`runtime-c/` for use with generated C code.
 
 ```c
 int32 sat_add(int32 a, int32 b)
