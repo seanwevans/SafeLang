@@ -4,9 +4,21 @@ repos:
     hooks:
       - id: black
         language_version: python3
+
   - repo: https://github.com/pycqa/pylint
     rev: v3.3.1
     hooks:
       - id: pylint
         language_version: python3
         args: ["-E"]
+
+  - repo: local
+    hooks:
+      - id: coverage
+        name: coverage
+        entry: python scripts/run_coverage.py
+        language: python
+        additional_dependencies:
+          - coverage
+          - pytest
+        pass_filenames: false
