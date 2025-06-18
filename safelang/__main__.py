@@ -2,6 +2,7 @@
 
 import argparse
 from pathlib import Path
+import sys
 from .parser import parse_functions, verify_contracts
 
 
@@ -10,7 +11,11 @@ def main() -> int:
     parser.add_argument("file", type=Path, help="Path to SafeLang source")
     args = parser.parse_args()
 
-    text = args.file.read_text()
+    try:
+        text = args.file.read_text()
+    except (FileNotFoundError, OSError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     funcs = parse_functions(text)
     errors = verify_contracts(funcs)
 
