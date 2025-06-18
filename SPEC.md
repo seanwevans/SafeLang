@@ -138,7 +138,6 @@ import "hardware"
 
 * `@time Nns`  — per-function time budget
 * `@space NB`  — total stack and local memory
-* `@discard` — explicitly ignore return value
 * `@init` — required setup phase permitting limited dynamic alloc
 
 ---
