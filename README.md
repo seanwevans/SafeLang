@@ -76,6 +76,8 @@ function "adjust_thrust" {
 * Arithmetic is performed using a **widened type**, then clamped to the original type's bounds
 * The Python demo runtime returns the clamped value along with a boolean flag
   indicating whether saturation occurred. No exception is raised on overflow.
+* A JavaScript runtime is available in `safelang/runtime.js` providing the same
+  saturating helpers for Node.js environments.
 
 The runtime exposes helpers `sat_add`, `sat_sub`, `sat_mul`, `sat_div`, and
 `sat_mod` implementing these semantics.
