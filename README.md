@@ -26,7 +26,7 @@ The SafeLang compiler is not your assistant. It is your adversary. It attempts t
 
 ### Function Structure
 
-* Max 50 lines per function (one line per statement or declaration)
+* Max 128 lines per function (one line per statement or declaration)
 * Each function must:
 
   * Declare explicit **time** and **space** budgets using `@time` and `@space`
@@ -34,14 +34,14 @@ The SafeLang compiler is not your assistant. It is your adversary. It attempts t
 
 ```c
 function "adjust_thrust" {
-    @space 256B
-    @time  1000ns
+    @space 16B
+    @time  100ns
 
     consume {
         f32(input) # [0, 1]
     }
 
-    result = input * 100.0
+    result = input * 100
 
     emit {
         f32(result) # [0, 100]
@@ -55,7 +55,7 @@ function "adjust_thrust" {
 
 ### Function Contracts
 
-* All non-void functions must have their return values checked by the caller
+* All functions must have their return values checked by the caller
 * Input validation is expressed through `consume` domain constraints
 
 ### Preprocessor Constraints
@@ -86,22 +86,17 @@ int32 sat_add(int32 a, int32 b)
 
 ### Compilation Discipline
 
-* All warnings are errors
+* All errors are critical
+* All warnings are errors, which are critical
+* All info are warnings, which are errors, which are critical
 * Compiler attempts adversarial simulation of symbolic execution paths
 * Compilation only succeeds if the compiler **fails to falsify** the program under any circumstances
 
 ## Runtime Behavior
 
 * Saturating arithmetic is deterministic and portable
-* Overflow never wraps or traps
+* Overflow never wraps
 * All failures (e.g., time/space overrun, assertion fail) result in predictable halt or fallback
-
-## Target Applications
-
-* Avionics
-* Spacecraft control systems
-* Nuclear reactor monitors
-* Autonomous vehicle core logic
 
 ---
 
