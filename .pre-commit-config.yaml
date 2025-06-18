@@ -11,6 +11,8 @@ repos:
       - id: pylint
         language_version: python3
         args: ["-E"]
+        additional_dependencies:
+          - pytest
 
   - repo: local
     hooks:
@@ -21,4 +23,5 @@ repos:
         additional_dependencies:
           - coverage
           - pytest
+          - coverage-badge
         pass_filenames: false

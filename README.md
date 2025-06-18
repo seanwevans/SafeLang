@@ -1,5 +1,7 @@
 # SafeLang
 
+![Coverage](coverage.svg)
+
 SafeLang is a programming language designed for **hard real-time, safety-critical embedded systems**, inspired by NASA's 10 rules for developing safety-critical code. It aims to produce software that is provably safe, resilient to overflow and misuse, and adversarially verified.
 
 ## Philosophy
