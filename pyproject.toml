@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "safelang"
+version = "0.1.0"
+description = "Demo SafeLang verifier and runtime"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[project.scripts]
+safelang = "safelang.__main__:main"

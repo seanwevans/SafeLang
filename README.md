@@ -104,12 +104,18 @@ int32 sat_add(int32 a, int32 b)
 
 ## CLI Usage
 
-The repository includes a minimal demo verifier that you can run directly with Python.
+Install the package to expose the ``safelang`` command line tool and run the verifier.
 
-1. Execute the package on a SafeLang source file:
+1. Install the project in editable mode:
 
    ```bash
-   python -m safelang example.slang
+   python -m pip install -e .
+   ```
+
+2. Execute the verifier on a SafeLang source file:
+
+   ```bash
+   safelang example.slang
    ```
 
    Example output:
@@ -120,7 +126,7 @@ The repository includes a minimal demo verifier that you can run directly with P
 
    If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, the CLI prints `ERROR:` messages and exits with a non‑zero status.
 
-2. Alternatively, run the demonstration script which also showcases saturating arithmetic:
+3. Alternatively, run the demonstration script which also showcases saturating arithmetic:
 
    ```bash
    python demo.py
