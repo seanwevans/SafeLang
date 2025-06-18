@@ -98,6 +98,10 @@ int32 sat_add(int32 a, int32 b)
 * Overflow never wraps
 * All failures (e.g., time/space overrun, assertion fail) result in predictable halt or fallback
 
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
 ---
 
 For information on the compiler internals and verification agents, see [AGENTS.md](AGENTS.md).
