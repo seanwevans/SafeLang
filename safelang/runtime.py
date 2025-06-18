@@ -1,8 +1,10 @@
 """SafeLang runtime helpers for saturating arithmetic.
 
-If a value exceeds the representable range during clamping, a
-``SaturatingOverflow`` error is raised. Callers are expected to catch this
-exception to handle overflow conditions explicitly.
+All helpers return both the clamped result and a boolean indicating whether
+the operation saturated. Earlier revisions raised ``SaturatingOverflow`` when
+overflow occurred but the test-suite expects a non‑throwing API.  The
+exception class is kept for backwards compatibility but is no longer used by
+these helpers.
 """
 
 from typing import Tuple
@@ -22,30 +24,34 @@ def bounds(bits: int, signed: bool) -> Tuple[int, int]:
     return min_val, max_val
 
 
-def clamp(value: int, bits: int, signed: bool) -> int:
+def clamp(value: int, bits: int, signed: bool) -> Tuple[int, bool]:
     """Clamp ``value`` to the representable range.
 
-    Raises ``SaturatingOverflow`` if the value is outside the range.
+    Returns a tuple of the clamped value and a boolean indicating whether
+    saturation occurred.
     """
     min_val, max_val = bounds(bits, signed)
-    if value > max_val or value < min_val:
-        raise SaturatingOverflow(
-            f"value {value} outside [{min_val}, {max_val}]"
-        )
-    return value
+    if value > max_val:
+        return max_val, True
+    if value < min_val:
+        return min_val, True
+    return value, False
 
 
-def sat_add(a: int, b: int, bits: int, signed: bool = True) -> int:
+def sat_add(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
+    """Add ``a`` and ``b`` with saturating semantics."""
     total = int(a) + int(b)
     return clamp(total, bits, signed)
 
 
-def sat_sub(a: int, b: int, bits: int, signed: bool = True) -> int:
+def sat_sub(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
+    """Subtract ``b`` from ``a`` with saturating semantics."""
     total = int(a) - int(b)
     return clamp(total, bits, signed)
 
 
-def sat_mul(a: int, b: int, bits: int, signed: bool = True) -> int:
+def sat_mul(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
+    """Multiply ``a`` and ``b`` with saturating semantics."""
     total = int(a) * int(b)
     return clamp(total, bits, signed)
 
