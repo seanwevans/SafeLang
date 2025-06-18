@@ -8,6 +8,7 @@ from typing import List
 @dataclass
 class FunctionDef:
     """Container for a parsed function's metadata and contracts."""
+
     name: str
     space: str
     time: str
