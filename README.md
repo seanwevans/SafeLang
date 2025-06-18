@@ -145,8 +145,6 @@ Install the package to expose the ``safelang`` command line tool and run the ver
    sat_add result=2147483647 saturated=True
    ```
 
-=======
-
 ## Running Tests
 
 Install pytest and execute the suite:
