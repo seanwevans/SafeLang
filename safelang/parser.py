@@ -12,6 +12,7 @@ class FunctionDef:
     time: str
     consume: List[str] = field(default_factory=list)
     emit: List[str] = field(default_factory=list)
+    is_init: bool = False
 
 
 def _sanitize(text: str) -> str:
@@ -110,7 +111,9 @@ def parse_functions(text: str) -> List[FunctionDef]:
     while i < len(san_lines):
         line_san = san_lines[i].strip()
         line_orig = orig_lines[i].strip()
+        flagged_init = False
         if line_san.startswith("@init"):
+            flagged_init = True
             i += 1
             if i >= len(san_lines):
                 raise ValueError("@init must be followed by a function definition")
@@ -165,6 +168,7 @@ def parse_functions(text: str) -> List[FunctionDef]:
                         )
                         if ln.strip()
                     ],
+                    is_init=flagged_init,
                 )
             )
 
@@ -178,7 +182,10 @@ def parse_functions(text: str) -> List[FunctionDef]:
 
 def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
     errors = []
+    init_count = 0
     for fn in funcs:
+        if fn.is_init:
+            init_count += 1
         if not fn.space:
             errors.append(f"Function {fn.name} missing @space")
         if not fn.time:
@@ -187,6 +194,12 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
             errors.append(f"Function {fn.name} missing consume block")
         if not fn.emit:
             errors.append(f"Function {fn.name} missing emit block")
+
+    if init_count == 0:
+        errors.append("No @init function defined")
+    elif init_count > 1:
+        errors.append("Multiple @init functions defined")
+
     return errors
 
 
