@@ -30,10 +30,10 @@ Each agent represents a specialized verifier or attack vector against your assum
 * Clamps results to type bounds
 * Flags frequent clamping for review
 
-### 4. **Assertion Enforcer**
+### 4. **Interface Contract Enforcer**
 
-* Requires 2+ assertions per function (input + output)
-* Rejects any function missing preconditions or postconditions
+* Ensures every function declares `consume` and `emit` domains
+* Rejects functions missing input or output constraints
 
 ### 5. **Pointer Depth Checker**
 
@@ -47,12 +47,12 @@ Each agent represents a specialized verifier or attack vector against your assum
 
 ### 7. **Function Contract Checker**
 
-* Validates that all inputs are guarded by assertions
+* Verifies domain constraints from `consume` and `emit` blocks
 * Ensures all return values are consumed or explicitly discarded with `@discard` tag
 
 ### 8. **Time/Space Budget Analyzer**
 
-* Verifies declared `@time_limit` and `@space_limit`
+* Verifies declared `@time` and `@space` budgets
 * Performs static cost modeling and simulation
 * Flags any call paths that may exceed bounds
 

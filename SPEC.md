@@ -60,13 +60,22 @@ struct Vec3
 ### Function
 
 ```c
-@time_limit(ns = 1000)
-@space_limit(bytes = 512)
-function name(type arg1, type arg2) returns type
-    assert(arg1 constraint)
+@init
+function "name" {
+    @space 512B
+    @time  1000ns
+
+    consume {
+        f32(arg1) # [0, 1]
+        f32(arg2) # [-1, 1]
+    }
+
     // body
-    assert(return_value constraint)
-    return return_value
+
+    emit {
+        f32(result) # [0, 1]
+    }
+}
 ```
 
 ### Loop
@@ -127,10 +136,10 @@ import "hardware"
 
 ## 📌 Attributes
 
-* `@time_limit(ns = N)` — compile-time budget enforcement
-* `@space_limit(bytes = B)` — total stack and local memory
+* `@time Nns`  — per-function time budget
+* `@space NB`  — total stack and local memory
 * `@discard` — explicitly ignore return value
-* `@init` — setup phase permitting limited dynamic alloc
+* `@init` — required setup phase permitting limited dynamic alloc
 
 ---
 
