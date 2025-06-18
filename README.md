@@ -73,7 +73,7 @@ function "adjust_thrust" {
 * All arithmetic operations are saturating by default
 * Arithmetic is performed using a **widened type**, then clamped to the original type's bounds
 * The Python demo runtime returns the clamped value along with a boolean flag
-  indicating whether saturation occurred
+  indicating whether saturation occurred. No exception is raised on overflow.
 
 ```c
 int32 sat_add(int32 a, int32 b)
