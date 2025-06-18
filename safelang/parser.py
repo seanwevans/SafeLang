@@ -25,26 +25,37 @@ def parse_functions(text: str) -> List[FunctionDef]:
         if line.startswith("function ") or line.startswith("@init"):
             if line.startswith("@init"):
                 i += 1
+                if i >= len(lines):
+                    raise ValueError("@init must be followed by a function definition")
                 line = lines[i].strip()
 
             name_match = re.match(r"function\s+\"([^\"]+)\"", line)
             if not name_match:
-                i += 1
-                continue
+                raise ValueError(f"Malformed function declaration at line {i + 1}: {line}")
             name = name_match.group(1)
 
             brace_depth = 0
             body_lines = []
+            brace_depth += line.count("{")
+            brace_depth -= line.count("}")
+            if brace_depth < 0:
+                raise ValueError(f"Unmatched closing brace at line {i + 1}")
             if "{" in line:
-                brace_depth += 1
-                body_lines.append(line.split("{", 1)[1])
+                after = line.split("{", 1)[1]
+                if after:
+                    body_lines.append(after)
             i += 1
             while i < len(lines) and brace_depth > 0:
                 l = lines[i]
                 brace_depth += l.count("{")
                 brace_depth -= l.count("}")
+                if brace_depth < 0:
+                    raise ValueError(f"Unmatched closing brace at line {i + 1}")
                 body_lines.append(l)
                 i += 1
+
+            if brace_depth != 0:
+                raise ValueError(f"Unterminated function block starting at line {i + 1 - len(body_lines)}")
 
             body = "\n".join(body_lines)
             space_match = re.search(r"@space\s+([0-9]+B)", body)
