@@ -105,3 +105,13 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 For information on the compiler internals and verification agents, see [AGENTS.md](AGENTS.md).
+
+## Running Tests
+
+Install pytest and execute the suite:
+
+```bash
+python -m pip install pytest
+pytest
+```
+
