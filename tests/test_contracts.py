@@ -1,7 +1,3 @@
-import os
-import sys
-import pytest
-
 from safelang.parser import parse_functions, verify_contracts
 
 BASE_INIT = (
