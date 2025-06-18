@@ -87,3 +87,22 @@ def test_function_exceeds_line_limit():
     )
     errors = _verify(src)
     assert "Function foo exceeds 128 line limit" in errors
+
+
+def test_duplicate_function_name():
+    src = (
+        'function "dup" {\n'
+        '@space 1B\n'
+        '@time 1ns\n'
+        'consume { nil }\n'
+        'emit { nil }\n'
+        '}\n'
+        'function "dup" {\n'
+        '@space 1B\n'
+        '@time 1ns\n'
+        'consume { nil }\n'
+        'emit { nil }\n'
+        '}'
+    )
+    errors = _verify(src)
+    assert "Duplicate function name dup" in errors

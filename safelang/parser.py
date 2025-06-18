@@ -198,7 +198,13 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
     """Check each parsed function for required annotations and limits."""
     errors = []
     init_count = 0
+    seen_names = set()
     for fn in funcs:
+        if fn.name in seen_names:
+            errors.append(f"Duplicate function name {fn.name}")
+        else:
+            seen_names.add(fn.name)
+
         if fn.is_init:
             init_count += 1
 
