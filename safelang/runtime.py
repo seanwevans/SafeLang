@@ -53,10 +53,30 @@ def sat_mul(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
     return clamp(total, bits, signed)
 
 
+def sat_div(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
+    """Divide ``a`` by ``b`` with saturating semantics."""
+    bounds(bits, signed)  # validate bit width
+    if int(b) == 0:
+        raise ZeroDivisionError("division by zero")
+    total = int(a) // int(b)
+    return clamp(total, bits, signed)
+
+
+def sat_mod(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
+    """Compute ``a`` modulo ``b`` with saturating semantics."""
+    bounds(bits, signed)  # validate bit width
+    if int(b) == 0:
+        raise ZeroDivisionError("integer modulo by zero")
+    total = int(a) % int(b)
+    return clamp(total, bits, signed)
+
+
 __all__ = [
     "bounds",
     "clamp",
     "sat_add",
     "sat_sub",
     "sat_mul",
+    "sat_div",
+    "sat_mod",
 ]
