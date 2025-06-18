@@ -1,9 +1,8 @@
 """Simple SafeLang code generators."""
 
 from __future__ import annotations
-
-import re
 from typing import List
+import re
 
 from .parser import FunctionDef
 
@@ -38,12 +37,46 @@ _RUST_TYPE_MAP = {
 _PARAM_RE = re.compile(r"(\w+)\(([^)]+)\)")
 
 
+
 def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
     """Parse parameters from consume block lines.
 
     ``type_map`` controls the type names and ``style`` selects
     formatting ("c" or "rust").
     """
+
+def _parse_space(space: str) -> int:
+    match = re.match(r"([0-9_]+)B", space)
+    if not match:
+        return 0
+    return int(match.group(1).replace("_", ""))
+
+
+def compile_to_nasm(funcs: List[FunctionDef]) -> str:
+    """Return NASM x86_64 assembly for ``funcs``.
+
+    This is a very small subset that only emits prologue/epilogue and reserves
+    stack space based on ``@space`` attributes.
+    """
+    lines = ["; Auto-generated NASM for SafeLang"]
+    for fn in funcs:
+        lines.append(f"global {fn.name}")
+    lines.append("")
+    for fn in funcs:
+        space = _parse_space(fn.space)
+        lines.append(f"{fn.name}:")
+        lines.append("    push rbp")
+        lines.append("    mov rbp, rsp")
+        if space:
+            lines.append(f"    sub rsp, {space}")
+        lines.append("    ; TODO: compile body")
+        if space:
+            lines.append(f"    add rsp, {space}")
+        lines.append("    pop rbp")
+        lines.append("    ret")
+
+
+def _parse_params(lines: List[str]) -> List[str]:
     params = []
     for ln in lines:
         m = _PARAM_RE.search(ln)
@@ -69,6 +102,7 @@ def generate_c(funcs: List[FunctionDef]) -> str:
         for b in body:
             lines.append("    " + b.rstrip())
         lines.append("}")
+
         lines.append("")
     return "\n".join(lines)
 
@@ -88,4 +122,4 @@ def generate_rust(funcs: List[FunctionDef]) -> str:
     return "\n".join(lines)
 
 
-__all__ = ["generate_c", "generate_rust"]
+__all__ = ["generate_c", "generate_rust","compile_to_nasm"]
