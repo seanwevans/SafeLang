@@ -22,25 +22,31 @@ The SafeLang compiler is not your assistant. It is your adversary. It attempts t
 ### Memory Management
 
 * No dynamic allocation after initialization
-* An optional `@init` block may be used for setup-time allocations only
+* A mandatory `@init` function performs setup-time allocation and must run before other code
 
 ### Function Structure
 
 * Max 50 lines per function (one line per statement or declaration)
 * Each function must:
 
-  * Have an **entry assertion** (input validation)
-  * Have an **exit assertion** (output validation)
-  * Declare explicit **time** and **space** bounds
+  * Declare explicit **time** and **space** budgets using `@time` and `@space`
+  * Specify input and output domains via `consume` and `emit` blocks
 
 ```c
-@time_limit(ns = 1000)
-@space_limit(bytes = 256)
-function adjust_thrust(float input) returns float
-    assert(input >= 0.0 && input <= 1.0)
-    float result = input * 100.0
-    assert(result >= 0.0 && result <= 100.0)
-    return result
+function "adjust_thrust" {
+    @space 256B
+    @time  1000ns
+
+    consume {
+        f32(input) # [0, 1]
+    }
+
+    result = input * 100.0
+
+    emit {
+        f32(result) # [0, 100]
+    }
+}
 ```
 
 ### Scope Discipline
@@ -50,7 +56,7 @@ function adjust_thrust(float input) returns float
 ### Function Contracts
 
 * All non-void functions must have their return values checked by the caller
-* All function parameters must be validated by the callee
+* Input validation is expressed through `consume` domain constraints
 
 ### Preprocessor Constraints
 
