@@ -60,3 +60,15 @@ def test_multiple_init_functions():
     )
     errors = _verify(src, include_init=False)
     assert errors == ["Multiple @init functions defined"]
+
+
+def test_non_positive_space():
+    src = 'function "foo" {\n@space 0B\n@time 1ns\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == ["Function foo has non-positive @space"]
+
+
+def test_non_positive_time():
+    src = 'function "bar" {\n@space 1B\n@time 0ns\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == ["Function bar has non-positive @time"]

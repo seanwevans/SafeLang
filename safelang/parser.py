@@ -193,10 +193,27 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
     for fn in funcs:
         if fn.is_init:
             init_count += 1
+
         if not fn.space:
             errors.append(f"Function {fn.name} missing @space")
+        else:
+            try:
+                space_num = int(re.sub(r"[^0-9]", "", fn.space))
+                if space_num <= 0:
+                    errors.append(f"Function {fn.name} has non-positive @space")
+            except ValueError:
+                errors.append(f"Function {fn.name} invalid @space value")
+
         if not fn.time:
             errors.append(f"Function {fn.name} missing @time")
+        else:
+            try:
+                time_num = int(re.sub(r"[^0-9]", "", fn.time))
+                if time_num <= 0:
+                    errors.append(f"Function {fn.name} has non-positive @time")
+            except ValueError:
+                errors.append(f"Function {fn.name} invalid @time value")
+
         if not fn.consume:
             errors.append(f"Function {fn.name} missing consume block")
         if not fn.emit:
