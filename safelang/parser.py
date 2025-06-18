@@ -13,6 +13,7 @@ class FunctionDef:
     consume: List[str] = field(default_factory=list)
     emit: List[str] = field(default_factory=list)
     is_init: bool = False
+    lines: int = 0
 
 
 def _sanitize(text: str) -> str:
@@ -139,6 +140,7 @@ def parse_functions(text: str) -> List[FunctionDef]:
 
             end_pos = _find_matching_brace(sanitized, next_open)
             body = text[next_open + 1 : end_pos]
+            line_count = body.count("\n") + 1 if body else 0
 
             space_match = re.search(r"@space\s+([0-9]+B)", body)
             time_match = re.search(r"@time\s+([0-9_]+ns)", body)
@@ -169,6 +171,7 @@ def parse_functions(text: str) -> List[FunctionDef]:
                         if ln.strip()
                     ],
                     is_init=flagged_init,
+                    lines=line_count,
                 )
             )
 
@@ -194,6 +197,8 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
             errors.append(f"Function {fn.name} missing consume block")
         if not fn.emit:
             errors.append(f"Function {fn.name} missing emit block")
+        if fn.lines > 128:
+            errors.append(f"Function {fn.name} exceeds 128 line limit")
 
     if init_count == 0:
         errors.append("No @init function defined")

@@ -127,7 +127,7 @@ Install the package to expose the ``safelang`` command line tool and run the ver
    Parsed 2 functions successfully.
    ```
 
-   If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, the CLI prints `ERROR:` messages and exits with a non‑zero status.
+   If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, or exceeds the 128 line limit, the CLI prints `ERROR:` messages and exits with a non‑zero status.
 
 3. Alternatively, run the demonstration script which also showcases saturating arithmetic:
 
