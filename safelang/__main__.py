@@ -5,12 +5,19 @@ from pathlib import Path
 import sys
 from .parser import parse_functions, verify_contracts
 from .compiler import compile_to_nasm
+from .compiler import generate_c
 
 
 def main() -> int:
+    """Parse CLI arguments and verify a SafeLang source file."""
     parser = argparse.ArgumentParser(description="SafeLang demo verifier")
     parser.add_argument("file", type=Path, help="Path to SafeLang source")
     parser.add_argument("--nasm", type=Path, help="Write NASM output to file")
+    parser.add_argument(
+        "--emit-c",
+        action="store_true",
+        help="Output generated C instead of verification result",
+    )
     args = parser.parse_args()
 
     try:
@@ -39,6 +46,10 @@ def main() -> int:
         except OSError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
+    if args.emit_c:
+        print(generate_c(funcs))
+    else:
+        print(f"Parsed {len(funcs)} functions successfully.")
     return 0
 
 

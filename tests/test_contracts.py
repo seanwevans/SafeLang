@@ -72,3 +72,18 @@ def test_non_positive_time():
     src = 'function "bar" {\n@space 1B\n@time 0ns\nconsume { nil }\nemit { nil }\n}'
     errors = _verify(src)
     assert errors == ["Function bar has non-positive @time"]
+
+
+def test_function_exceeds_line_limit():
+    body = "\n".join("x = 1" for _ in range(129))
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume { nil }\n"
+        "emit { nil }\n"
+        f"{body}\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert "Function foo exceeds 128 line limit" in errors

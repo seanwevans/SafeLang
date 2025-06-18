@@ -87,7 +87,7 @@ Generates hardware watchdog fallback logic if time budgets are overrun
 
 Captures falsification traces for external replay/fuzz testing
 
-### - ** Formal Prover**
+### - **Formal Prover**
 
 Generates a formal proof of the program's correctness in Coq
 
