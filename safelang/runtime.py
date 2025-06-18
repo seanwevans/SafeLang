@@ -9,6 +9,10 @@ from typing import Tuple
 
 
 def bounds(bits: int, signed: bool) -> Tuple[int, int]:
+    """Return the minimum and maximum representable values for the width.
+
+    ``signed`` selects between two's complement and unsigned ranges.
+    """
     if bits <= 0:
         raise ValueError("bits must be positive")
 
