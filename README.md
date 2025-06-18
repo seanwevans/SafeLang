@@ -101,3 +101,13 @@ int32 sat_add(int32 a, int32 b)
 ---
 
 For information on the compiler internals and verification agents, see [AGENTS.md](AGENTS.md).
+
+## Running Tests
+
+Install pytest and execute the suite:
+
+```bash
+python -m pip install pytest
+pytest
+```
+
