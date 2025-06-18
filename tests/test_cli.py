@@ -73,3 +73,13 @@ def test_cli_emit_rust():
     )
     assert result.returncode == 0
     assert "pub fn clamp_params(" in result.stdout
+
+
+def test_cli_emit_nasm(tmp_path):
+    src = Path(__file__).resolve().parents[1] / "example.slang"
+    out_file = tmp_path / "out.asm"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--nasm", str(out_file), str(src)]
+    )
+    assert result.returncode == 0
+    assert out_file.read_text().startswith("; Auto-generated NASM")
