@@ -135,6 +135,11 @@ Install the package to expose the ``safelang`` command line tool and run the ver
    Parsed 2 functions successfully.
    ```
 
+   To generate NASM output, use `--nasm`:
+   ```bash
+   safelang --nasm out.asm example.slang
+   ```
+
    If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, or exceeds the 128 line limit, the CLI prints `ERROR:` messages and exits with a non‑zero status.
 
 3. Alternatively, run the demonstration script which also showcases saturating arithmetic:

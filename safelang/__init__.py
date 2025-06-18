@@ -2,6 +2,7 @@
 
 from .runtime import sat_add, sat_sub, sat_mul, sat_div, sat_mod
 from .parser import FunctionDef, parse_functions, verify_contracts
+from .compiler import compile_to_nasm
 from .compiler import generate_c
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "FunctionDef",
     "parse_functions",
     "verify_contracts",
+    "compile_to_nasm",
     "generate_c",
 ]
