@@ -75,6 +75,9 @@ function "adjust_thrust" {
 * The Python demo runtime returns the clamped value along with a boolean flag
   indicating whether saturation occurred. No exception is raised on overflow.
 
+The runtime exposes helpers `sat_add`, `sat_sub`, `sat_mul`, `sat_div`, and
+`sat_mod` implementing these semantics.
+
 ```c
 int32 sat_add(int32 a, int32 b)
     int64 sum = (int64)a + (int64)b
