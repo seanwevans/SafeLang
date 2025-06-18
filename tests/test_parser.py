@@ -18,6 +18,14 @@ def test_init_without_function():
         parse_functions("@init")
 
 
+def test_init_followed_by_comment():
+    src = '@init\n! comment\nfunction "foo" { }'
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
+    assert funcs[0].is_init
+    assert funcs[0].name == "foo"
+
+
 def test_unterminated_block():
     src = 'function "foo" {\n    @space 1B'
     with pytest.raises(ValueError):
