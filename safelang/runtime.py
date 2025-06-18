@@ -1,17 +1,11 @@
 """SafeLang runtime helpers for saturating arithmetic.
 
 All helpers return both the clamped result and a boolean indicating whether
-the operation saturated. Earlier revisions raised ``SaturatingOverflow`` when
-overflow occurred but the test-suite expects a non‑throwing API.  The
-exception class is kept for backwards compatibility but is no longer used by
-these helpers.
+the operation saturated. Overflow never raises an exception; callers must
+check the returned flag to determine if clamping occurred.
 """
 
 from typing import Tuple
-
-
-class SaturatingOverflow(Exception):
-    """Raised when a value would exceed the representable range."""
 
 
 def bounds(bits: int, signed: bool) -> Tuple[int, int]:
@@ -57,7 +51,6 @@ def sat_mul(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
 
 
 __all__ = [
-    "SaturatingOverflow",
     "bounds",
     "clamp",
     "sat_add",
