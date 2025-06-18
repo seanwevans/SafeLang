@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def test_cli_valid():
-    file = Path("example.slang")
+    file = Path(__file__).resolve().parents[1] / "example.slang"
     result = subprocess.run(
         [sys.executable, "-m", "safelang", str(file)], capture_output=True, text=True
     )

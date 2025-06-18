@@ -1,5 +1,7 @@
 """Demonstration of the SafeLang parser and saturating math."""
 
+from pathlib import Path
+
 from safelang import (
     parse_functions,
     verify_contracts,
@@ -8,7 +10,8 @@ from safelang import (
 
 
 def main() -> None:
-    with open("example.slang") as f:
+    example = Path(__file__).resolve().with_name("example.slang")
+    with open(example) as f:
         text = f.read()
 
     funcs = parse_functions(text)
