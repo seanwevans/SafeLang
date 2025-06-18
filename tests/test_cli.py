@@ -51,3 +51,14 @@ def test_cli_missing_file(tmp_path):
     )
     assert result.returncode != 0
     assert "ERROR" in result.stderr
+
+
+def test_cli_emit_c():
+    file = Path(__file__).resolve().parents[1] / "example.slang"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--emit-c", str(file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "#include <stdint.h>" in result.stdout
