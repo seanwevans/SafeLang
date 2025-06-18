@@ -123,10 +123,12 @@ Install the package to expose the ``safelang`` command line tool and run the ver
    safelang example.slang
    ```
 
-   To generate C code instead of just verifying, pass ``--emit-c``:
+   To generate C code instead of just verifying, pass ``--emit-c``.
+   For Rust output, use ``--emit-rust``:
 
    ```bash
    safelang --emit-c example.slang
+   safelang --emit-rust example.slang
    ```
 
    Example output:

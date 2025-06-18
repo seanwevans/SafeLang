@@ -62,3 +62,14 @@ def test_cli_emit_c():
     )
     assert result.returncode == 0
     assert "#include <stdint.h>" in result.stdout
+
+
+def test_cli_emit_rust():
+    file = Path(__file__).resolve().parents[1] / "example.slang"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--emit-rust", str(file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "pub fn clamp_params(" in result.stdout
