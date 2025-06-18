@@ -1,4 +1,5 @@
 import safelang.runtime as rt
+import pytest
 
 
 def test_sat_add_normal():
@@ -87,3 +88,30 @@ def test_sat_mul_unsigned_saturates_min():
 
 def test_no_saturating_overflow_export():
     assert not hasattr(rt, "SaturatingOverflow")
+
+
+def test_invalid_bit_width_bounds():
+    with pytest.raises(ValueError):
+        rt.bounds(0, True)
+    with pytest.raises(ValueError):
+        rt.bounds(-1, False)
+
+
+def test_invalid_bit_width_clamp():
+    with pytest.raises(ValueError):
+        rt.clamp(0, 0, True)
+
+
+def test_invalid_bit_width_sat_add():
+    with pytest.raises(ValueError):
+        rt.sat_add(1, 1, 0, True)
+
+
+def test_invalid_bit_width_sat_sub():
+    with pytest.raises(ValueError):
+        rt.sat_sub(1, 1, -8, True)
+
+
+def test_invalid_bit_width_sat_mul():
+    with pytest.raises(ValueError):
+        rt.sat_mul(1, 1, 0, True)
