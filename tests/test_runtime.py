@@ -44,3 +44,7 @@ def test_sat_mul_saturates_min():
     value, saturated = rt.sat_mul(-20, 20, 8, signed=True)
     assert value == -128
     assert saturated
+
+
+def test_no_saturating_overflow_export():
+    assert not hasattr(rt, "SaturatingOverflow")
