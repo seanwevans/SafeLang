@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 import sys
 from .parser import parse_functions, verify_contracts
-from .compiler import generate_c
+from .compiler import generate_c, generate_rust
 
 
 def main() -> int:
@@ -15,6 +15,11 @@ def main() -> int:
         "--emit-c",
         action="store_true",
         help="Output generated C instead of verification result",
+    )
+    parser.add_argument(
+        "--emit-rust",
+        action="store_true",
+        help="Output generated Rust instead of verification result",
     )
     args = parser.parse_args()
 
@@ -37,6 +42,8 @@ def main() -> int:
 
     if args.emit_c:
         print(generate_c(funcs))
+    elif args.emit_rust:
+        print(generate_rust(funcs))
     else:
         print(f"Parsed {len(funcs)} functions successfully.")
     return 0
