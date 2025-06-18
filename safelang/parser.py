@@ -10,6 +10,7 @@ class FunctionDef:
     name: str
     space: str
     time: str
+    body: str = ""
     consume: List[str] = field(default_factory=list)
     emit: List[str] = field(default_factory=list)
     is_init: bool = False
@@ -159,6 +160,7 @@ def parse_functions(text: str) -> List[FunctionDef]:
                     name=name,
                     space=space_match.group(1) if space_match else "",
                     time=time_match.group(1) if time_match else "",
+                    body=body,
                     consume=[
                         ln.strip()
                         for ln in (
