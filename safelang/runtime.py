@@ -9,6 +9,9 @@ from typing import Tuple
 
 
 def bounds(bits: int, signed: bool) -> Tuple[int, int]:
+    if bits <= 0:
+        raise ValueError("bits must be positive")
+
     if signed:
         max_val = 2 ** (bits - 1) - 1
         min_val = -2 ** (bits - 1)
