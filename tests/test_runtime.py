@@ -95,26 +95,36 @@ def test_invalid_bit_width_bounds():
         rt.bounds(0, True)
     with pytest.raises(ValueError):
         rt.bounds(-1, False)
+    with pytest.raises(ValueError):
+        rt.bounds(64, True)
 
 
 def test_invalid_bit_width_clamp():
     with pytest.raises(ValueError):
         rt.clamp(0, 0, True)
+    with pytest.raises(ValueError):
+        rt.clamp(0, 64, True)
 
 
 def test_invalid_bit_width_sat_add():
     with pytest.raises(ValueError):
         rt.sat_add(1, 1, 0, True)
+    with pytest.raises(ValueError):
+        rt.sat_add(1, 1, 64, True)
 
 
 def test_invalid_bit_width_sat_sub():
     with pytest.raises(ValueError):
         rt.sat_sub(1, 1, -8, True)
+    with pytest.raises(ValueError):
+        rt.sat_sub(1, 1, 64, True)
 
 
 def test_invalid_bit_width_sat_mul():
     with pytest.raises(ValueError):
         rt.sat_mul(1, 1, 0, True)
+    with pytest.raises(ValueError):
+        rt.sat_mul(1, 1, 64, True)
 
 
 def test_sat_div_normal():
@@ -197,8 +207,12 @@ def test_sat_mod_unsigned_saturates_min():
 def test_invalid_bit_width_sat_div():
     with pytest.raises(ValueError):
         rt.sat_div(1, 1, 0, True)
+    with pytest.raises(ValueError):
+        rt.sat_div(1, 1, 64, True)
 
 
 def test_invalid_bit_width_sat_mod():
     with pytest.raises(ValueError):
         rt.sat_mod(1, 1, 0, True)
+    with pytest.raises(ValueError):
+        rt.sat_mod(1, 1, 64, True)

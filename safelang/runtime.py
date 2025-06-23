@@ -9,12 +9,15 @@ from typing import Tuple
 
 
 def bounds(bits: int, signed: bool) -> Tuple[int, int]:
-    """Return the minimum and maximum representable values for the width.
+    """Return the minimum and maximum representable values for ``bits``.
 
-    ``signed`` selects between two's complement and unsigned ranges.
+    ``signed`` selects between two's complement and unsigned ranges. ``bits``
+    must be between 1 and 63 inclusive to match the C runtime limits.
     """
     if bits <= 0:
         raise ValueError("bits must be positive")
+    if bits > 63:
+        raise ValueError("bits must be 63 or less")
 
     if signed:
         max_val = 2 ** (bits - 1) - 1
