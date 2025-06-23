@@ -12,12 +12,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="SafeLang demo verifier")
     parser.add_argument("file", type=Path, help="Path to SafeLang source")
     parser.add_argument("--nasm", type=Path, help="Write NASM output to file")
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--emit-c",
         action="store_true",
         help="Output generated C instead of verification result",
     )
-    parser.add_argument(
+    group.add_argument(
         "--emit-rust",
         action="store_true",
         help="Output generated Rust instead of verification result",
