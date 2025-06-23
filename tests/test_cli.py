@@ -83,3 +83,21 @@ def test_cli_emit_nasm(tmp_path):
     )
     assert result.returncode == 0
     assert out_file.read_text().startswith("; Auto-generated NASM")
+
+
+def test_cli_emit_conflict():
+    file = Path(__file__).resolve().parents[1] / "example.slang"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "safelang",
+            "--emit-c",
+            "--emit-rust",
+            str(file),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "usage:" in result.stderr.lower()
