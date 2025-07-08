@@ -152,8 +152,8 @@ def parse_functions(text: str) -> List[FunctionDef]:
             body = text[next_open + 1 : end_pos]
             line_count = body.count("\n") + 1 if body else 0
 
-            space_match = re.search(r"@space\s+([0-9]+B)", body)
-            time_match = re.search(r"@time\s+([0-9_]+ns)", body)
+            space_match = re.search(r"@space\s+(\S+)", body)
+            time_match = re.search(r"@time\s+(\S+)", body)
             consume_block = re.search(r"consume\s*{([^}]*)}", body, re.S)
             emit_block = re.search(r"emit\s*{([^}]*)}", body, re.S)
 
@@ -211,22 +211,28 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
         if not fn.space:
             errors.append(f"Function {fn.name} missing @space")
         else:
-            try:
-                space_num = int(re.sub(r"[^0-9]", "", fn.space))
-                if space_num <= 0:
-                    errors.append(f"Function {fn.name} has non-positive @space")
-            except ValueError:
+            if not re.fullmatch(r"[0-9_]+B", fn.space):
                 errors.append(f"Function {fn.name} invalid @space value")
+            else:
+                try:
+                    space_num = int(re.sub(r"[^0-9]", "", fn.space))
+                    if space_num <= 0:
+                        errors.append(f"Function {fn.name} has non-positive @space")
+                except ValueError:
+                    errors.append(f"Function {fn.name} invalid @space value")
 
         if not fn.time:
             errors.append(f"Function {fn.name} missing @time")
         else:
-            try:
-                time_num = int(re.sub(r"[^0-9]", "", fn.time))
-                if time_num <= 0:
-                    errors.append(f"Function {fn.name} has non-positive @time")
-            except ValueError:
+            if not re.fullmatch(r"[0-9_]+ns", fn.time):
                 errors.append(f"Function {fn.name} invalid @time value")
+            else:
+                try:
+                    time_num = int(re.sub(r"[^0-9]", "", fn.time))
+                    if time_num <= 0:
+                        errors.append(f"Function {fn.name} has non-positive @time")
+                except ValueError:
+                    errors.append(f"Function {fn.name} invalid @time value")
 
         if not fn.consume:
             errors.append(f"Function {fn.name} missing consume block")

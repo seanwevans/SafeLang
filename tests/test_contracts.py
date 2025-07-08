@@ -106,3 +106,27 @@ def test_duplicate_function_name():
     )
     errors = _verify(src)
     assert "Duplicate function name dup" in errors
+
+
+def test_space_invalid_format():
+    src = 'function "foo" {\n@space abcB\n@time 1ns\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == ["Function foo invalid @space value"]
+
+
+def test_time_invalid_format():
+    src = 'function "foo" {\n@space 1B\n@time 1ms\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == ["Function foo invalid @time value"]
+
+
+def test_space_missing_unit():
+    src = 'function "foo" {\n@space 10\n@time 1ns\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == ["Function foo invalid @space value"]
+
+
+def test_time_missing_unit():
+    src = 'function "foo" {\n@space 1B\n@time 10\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == ["Function foo invalid @time value"]
