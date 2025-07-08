@@ -55,3 +55,45 @@ def test_braces_in_string():
     src = 'function "foo" { msg = "{ not a brace }" }'
     funcs = parse_functions(src)
     assert len(funcs) == 1
+
+
+def test_line_start_hash_comment():
+    src = (
+        'function "foo" {\n'
+        '# comment at start\n'
+        '    @space 1B\n'
+        '    @time 1ns\n'
+        '    consume { nil }\n'
+        '    emit { nil }\n'
+        '}'
+    )
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
+
+
+def test_double_slash_comment():
+    src = (
+        'function "foo" {\n'
+        '// comment\n'
+        '    @space 1B\n'
+        '    @time 1ns\n'
+        '    consume { nil }\n'
+        '    emit { nil }\n'
+        '}'
+    )
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
+
+
+def test_block_comment():
+    src = (
+        'function "foo" {\n'
+        '/* block comment */\n'
+        '    @space 1B\n'
+        '    @time 1ns\n'
+        '    consume { nil }\n'
+        '    emit { nil }\n'
+        '}'
+    )
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
