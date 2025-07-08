@@ -13,16 +13,22 @@ def _call_js(func: str, a, b, bits: int, signed: bool = True):
         f"const res = rt.{func}({a}, {b}, {bits}, {str(signed).lower()});\n"
         "console.log(JSON.stringify({value: res.value.toString(), saturated: res.saturated}));"
     )
-    result = subprocess.run([
-        "node",
-        "-e",
-        snippet,
-    ], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        [
+            "node",
+            "-e",
+            snippet,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     out = json.loads(result.stdout.strip())
     return int(out["value"]), out["saturated"]
 
 
 # Test satAdd
+
 
 def test_sat_add_js_matches_py():
     cases = [
@@ -38,6 +44,7 @@ def test_sat_add_js_matches_py():
 
 # Test satSub
 
+
 def test_sat_sub_js_matches_py():
     cases = [
         (20, 10),
@@ -51,6 +58,7 @@ def test_sat_sub_js_matches_py():
 
 
 # Test satMul
+
 
 def test_sat_mul_js_matches_py():
     cases = [
@@ -66,6 +74,7 @@ def test_sat_mul_js_matches_py():
 
 # Test satDiv
 
+
 def test_sat_div_js_matches_py():
     cases = [
         (20, 5),
@@ -79,6 +88,7 @@ def test_sat_div_js_matches_py():
 
 
 # Test satMod
+
 
 def test_sat_mod_js_matches_py():
     cases = [
