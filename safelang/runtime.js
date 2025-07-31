@@ -10,6 +10,9 @@ function bounds(bits, signed = true) {
   if (bits <= 0) {
     throw new Error('bits must be positive');
   }
+  if (bits > 63) {
+    throw new Error('bits must be 63 or less');
+  }
   if (signed) {
     const max = (1n << BigInt(bits - 1)) - 1n;
     const min = -(1n << BigInt(bits - 1));
