@@ -154,6 +154,18 @@ def test_sat_div_saturates_min():
     assert saturated
 
 
+def test_sat_div_c_truncation():
+    value, saturated = rt.sat_div(-7, 3, 8, signed=True)
+    assert value == -2
+    assert not saturated
+    value, saturated = rt.sat_div(7, -3, 8, signed=True)
+    assert value == -2
+    assert not saturated
+    value, saturated = rt.sat_div(-7, -3, 8, signed=True)
+    assert value == 2
+    assert not saturated
+
+
 def test_sat_div_unsigned_normal():
     value, saturated = rt.sat_div(20, 5, 8, signed=False)
     assert value == 4
@@ -192,6 +204,18 @@ def test_sat_mod_saturates_min():
     value, saturated = rt.sat_mod(-150, -200, 8, signed=True)
     assert value == -128
     assert saturated
+
+
+def test_sat_mod_c_signed():
+    value, saturated = rt.sat_mod(-7, 3, 8, signed=True)
+    assert value == -1
+    assert not saturated
+    value, saturated = rt.sat_mod(7, -3, 8, signed=True)
+    assert value == 1
+    assert not saturated
+    value, saturated = rt.sat_mod(-7, -3, 8, signed=True)
+    assert value == -1
+    assert not saturated
 
 
 def test_sat_mod_unsigned_normal():

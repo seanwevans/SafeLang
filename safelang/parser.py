@@ -27,6 +27,8 @@ def _sanitize(text: str) -> str:
     length = len(text)
     in_string = None
     in_block_comment = False
+    string_start = None
+    block_start = None
 
     while i < length:
         ch = text[i]
@@ -49,6 +51,7 @@ def _sanitize(text: str) -> str:
 
         if text.startswith("/*", i):
             in_block_comment = True
+            block_start = i
             result.append("  ")
             i += 2
             continue
@@ -67,12 +70,20 @@ def _sanitize(text: str) -> str:
 
         if ch in {'"', "'"}:
             in_string = ch
+            string_start = i
             result.append(" ")
             i += 1
             continue
 
         result.append(ch)
         i += 1
+
+    if in_block_comment:
+        line = text.count("\n", 0, block_start) + 1
+        raise ValueError(f"Unterminated block comment starting at line {line}")
+    if in_string:
+        line = text.count("\n", 0, string_start) + 1
+        raise ValueError(f"Unterminated string starting at line {line}")
 
     return "".join(result)
 
@@ -194,6 +205,39 @@ def parse_functions(text: str) -> List[FunctionDef]:
     return funcs
 
 
+def _validate_numeric_attr(
+    value: str,
+    pattern: str,
+    errors: List[str],
+    missing_msg: str,
+    invalid_msg: str,
+    non_positive_msg: str,
+) -> None:
+    """Validate a numeric attribute against a regex pattern.
+
+    ``value`` is checked to ensure it matches ``pattern`` and represents a
+    positive integer.  Any failures are appended to ``errors`` using the
+    provided messages.
+    """
+
+    if not value:
+        errors.append(missing_msg)
+        return
+
+    if not re.fullmatch(pattern, value):
+        errors.append(invalid_msg)
+        return
+
+    try:
+        numeric = int(re.sub(r"[^0-9]", "", value))
+    except ValueError:
+        errors.append(invalid_msg)
+        return
+
+    if numeric <= 0:
+        errors.append(non_positive_msg)
+
+
 def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
     """Check each parsed function for required annotations and limits."""
     errors = []
@@ -208,31 +252,23 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
         if fn.is_init:
             init_count += 1
 
-        if not fn.space:
-            errors.append(f"Function {fn.name} missing @space")
-        else:
-            if not re.fullmatch(r"[0-9_]+B", fn.space):
-                errors.append(f"Function {fn.name} invalid @space value")
-            else:
-                try:
-                    space_num = int(re.sub(r"[^0-9]", "", fn.space))
-                    if space_num <= 0:
-                        errors.append(f"Function {fn.name} has non-positive @space")
-                except ValueError:
-                    errors.append(f"Function {fn.name} invalid @space value")
+        _validate_numeric_attr(
+            fn.space,
+            r"[0-9_]+B",
+            errors,
+            f"Function {fn.name} missing @space",
+            f"Function {fn.name} invalid @space value",
+            f"Function {fn.name} has non-positive @space",
+        )
 
-        if not fn.time:
-            errors.append(f"Function {fn.name} missing @time")
-        else:
-            if not re.fullmatch(r"[0-9_]+ns", fn.time):
-                errors.append(f"Function {fn.name} invalid @time value")
-            else:
-                try:
-                    time_num = int(re.sub(r"[^0-9]", "", fn.time))
-                    if time_num <= 0:
-                        errors.append(f"Function {fn.name} has non-positive @time")
-                except ValueError:
-                    errors.append(f"Function {fn.name} invalid @time value")
+        _validate_numeric_attr(
+            fn.time,
+            r"[0-9_]+ns",
+            errors,
+            f"Function {fn.name} missing @time",
+            f"Function {fn.name} invalid @time value",
+            f"Function {fn.name} has non-positive @time",
+        )
 
         if not fn.consume:
             errors.append(f"Function {fn.name} missing consume block")

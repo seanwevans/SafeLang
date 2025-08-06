@@ -1,11 +1,23 @@
 from pathlib import Path
 
-from safelang import parse_functions, generate_c, generate_rust
+from safelang import parse_functions, generate_c, generate_rust, compile_to_nasm
+import pytest
 
 
 def _load_example_funcs():
     src = Path(__file__).resolve().parents[1] / "example.slang"
     return parse_functions(src.read_text())
+
+
+def _load_bad_funcs():
+    src = """
+function "bad" {
+    @space 0B
+    @time 0
+    consume { foo(x) }
+}
+"""
+    return parse_functions(src)
 
 
 def test_generate_c_contains_clamp_params():
@@ -19,3 +31,41 @@ def test_generate_rust_contains_clamp_params():
     funcs = _load_example_funcs()
     rust_code = generate_rust(funcs)
     assert "pub fn clamp_params" in rust_code
+
+
+def test_compile_to_nasm_simple_add():
+    src = """
+function "add" {
+    @space 0B
+    @time 0ns
+
+    consume {
+        int64(a)
+        int64(b)
+    }
+
+    emit {
+        int64(r)
+    }
+
+    return a + b
+}
+"""
+    funcs = parse_functions(src)
+    asm = compile_to_nasm(funcs)
+    assert "global add" in asm
+    assert "add:" in asm
+    assert "mov rax, rdi" in asm
+    assert "add rax, rsi" in asm
+
+def test_generate_c_unknown_type_raises():
+    funcs = _load_bad_funcs()
+    with pytest.raises(ValueError, match="Unknown type: foo"):
+        generate_c(funcs)
+
+
+def test_generate_rust_unknown_type_raises():
+    funcs = _load_bad_funcs()
+    with pytest.raises(ValueError, match="Unknown type: foo"):
+        generate_rust(funcs)
+

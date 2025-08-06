@@ -45,7 +45,9 @@ def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
         if not match:
             continue
         typ, name = match.group(1), match.group(2)
-        mapped = type_map.get(typ, "int")
+        mapped = type_map.get(typ)
+        if mapped is None:
+            raise ValueError(f"Unknown type: {typ}")
         if style == "c":
             params.append(f"{mapped} {name}")
         else:  # rust
@@ -54,22 +56,123 @@ def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
 
 
 def _parse_space(space: str) -> int:
-    match = re.match(r"([0-9_]+)B", space)
+    """Parse a memory size string into bytes.
+
+    Recognizes suffixes like ``B``, ``KB``, ``MB`` and converts the numeric
+    portion (allowing underscores for readability) into its byte equivalent.
+
+    Parameters
+    ----------
+    space: str
+        A string representing the memory size (e.g. ``"4KB"``).
+
+    Returns
+    -------
+    int
+        The size in bytes.
+
+    Raises
+    ------
+    ValueError
+        If the format is not recognized.
+    """
+
+    space = space.strip().upper()
+    match = re.fullmatch(r"([0-9_]+)([KMGT]?B)", space)
     if not match:
-        return 0
-    return int(match.group(1).replace("_", ""))
+        raise ValueError(f"Unrecognized space format: {space}")
+
+    number = int(match.group(1).replace("_", ""))
+    suffix = match.group(2)
+    multipliers = {
+        "B": 1,
+        "KB": 1024,
+        "MB": 1024**2,
+        "GB": 1024**3,
+        "TB": 1024**4,
+    }
+
+    try:
+        return number * multipliers[suffix]
+    except KeyError as exc:
+        raise ValueError(f"Unrecognized space format: {space}") from exc
+
+
+_PARAM_REGS = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+
+
+def _mov_to_rax(token: str, var_regs: dict) -> str:
+    src = var_regs.get(token, token)
+    return f"mov rax, {src}"
+
+
+def _compile_expr(expr: str, var_regs: dict) -> List[str]:
+    tokens = expr.split()
+    if not tokens:
+        return []
+    if len(tokens) == 1:
+        return [_mov_to_rax(tokens[0], var_regs)]
+    if len(tokens) == 3:
+        lhs, op, rhs = tokens
+        code = [_mov_to_rax(lhs, var_regs)]
+        rhs_val = var_regs.get(rhs, rhs)
+        if op == "+":
+            code.append(f"add rax, {rhs_val}")
+        elif op == "-":
+            code.append(f"sub rax, {rhs_val}")
+        elif op == "*":
+            code.append(f"imul rax, {rhs_val}")
+        elif op == "/":
+            code.append("cqo")
+            code.append(f"idiv {rhs_val}")
+        else:
+            code.append(f"; unsupported op {op}")
+        return code
+    return [f"; unsupported expr {expr}"]
+
+
+def _compile_stmt(stmt: str, var_regs: dict) -> List[str]:
+    stmt = stmt.strip().rstrip(";")
+    if stmt.startswith("return"):
+        expr = stmt[len("return") :].strip()
+        return _compile_expr(expr, var_regs)
+    return [f"; unsupported: {stmt}"]
+
+
+def _extract_body(body: str) -> List[str]:
+    result: List[str] = []
+    in_block = False
+    for ln in body.splitlines():
+        stripped = ln.strip()
+        if not stripped:
+            continue
+        if in_block:
+            if stripped.endswith("}"):
+                in_block = False
+            continue
+        if stripped.startswith("@"):  # annotations like @space/@time
+            continue
+        if stripped.startswith("consume") or stripped.startswith("emit"):
+            if not stripped.endswith("}"):
+                in_block = True
+            continue
+        if stripped.startswith("memory") or stripped.startswith("!"):
+            continue
+        result.append(stripped)
+    return result
 
 
 def compile_to_nasm(funcs: List[FunctionDef]) -> str:
     """Return NASM x86_64 assembly for ``funcs``.
 
-    This is a very small subset that only emits prologue/epilogue and reserves
-    stack space based on ``@space`` attributes.
+    Supports a very small subset of SafeLang consisting of basic arithmetic
+    expressions and ``return`` statements.
     """
     lines = ["; Auto-generated NASM for SafeLang"]
     for fn in funcs:
         lines.append(f"global {fn.name}")
     lines.append("")
+
     for fn in funcs:
         space = _parse_space(fn.space)
         lines.append(f"{fn.name}:")
@@ -77,7 +180,18 @@ def compile_to_nasm(funcs: List[FunctionDef]) -> str:
         lines.append("    mov rbp, rsp")
         if space:
             lines.append(f"    sub rsp, {space}")
-        lines.append("    ; TODO: compile body")
+
+        var_regs = {}
+        for idx, ln in enumerate(fn.consume):
+            match = _PARAM_RE.search(ln)
+            if not match or idx >= len(_PARAM_REGS):
+                continue
+            var_regs[match.group(2)] = _PARAM_REGS[idx]
+
+        for stmt in _extract_body(fn.body):
+            for ins in _compile_stmt(stmt, var_regs):
+                lines.append(f"    {ins}")
+
         if space:
             lines.append(f"    add rsp, {space}")
         lines.append("    pop rbp")
@@ -90,7 +204,10 @@ def generate_c(funcs: List[FunctionDef]) -> str:
     """Generate a very small C translation of ``funcs``."""
     lines = ["// Generated by SafeLang", "#include <stdint.h>", ""]
     for fn in funcs:
-        params = _parse_params(fn.consume, _C_TYPE_MAP, "c")
+        try:
+            params = _parse_params(fn.consume, _C_TYPE_MAP, "c")
+        except ValueError as exc:
+            raise ValueError(f"{fn.name}: {exc}") from exc
         lines.append(f"/* {fn.name}: @space {fn.space} @time {fn.time} */")
         lines.append(f"void {fn.name}({', '.join(params)}) {{")
         body = fn.body.strip().splitlines()
@@ -106,7 +223,10 @@ def generate_rust(funcs: List[FunctionDef]) -> str:
     """Generate a very small Rust translation of ``funcs``."""
     lines = ["// Generated by SafeLang", ""]
     for fn in funcs:
-        params = _parse_params(fn.consume, _RUST_TYPE_MAP, "rust")
+        try:
+            params = _parse_params(fn.consume, _RUST_TYPE_MAP, "rust")
+        except ValueError as exc:
+            raise ValueError(f"{fn.name}: {exc}") from exc
         lines.append(f"// {fn.name}: @space {fn.space} @time {fn.time}")
         lines.append(f"pub fn {fn.name}({', '.join(params)}) {{")
         body = fn.body.strip().splitlines()
