@@ -97,3 +97,15 @@ def test_block_comment():
     )
     funcs = parse_functions(src)
     assert len(funcs) == 1
+
+
+def test_unterminated_block_comment():
+    src = 'function "foo" { /* comment'
+    with pytest.raises(ValueError, match="Unterminated block comment"):
+        parse_functions(src)
+
+
+def test_unterminated_string():
+    src = 'function "foo" { msg = "unterminated }'
+    with pytest.raises(ValueError, match="Unterminated string"):
+        parse_functions(src)
