@@ -63,19 +63,38 @@ def sat_mul(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
 def sat_div(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
     """Divide ``a`` by ``b`` with saturating semantics."""
     bounds(bits, signed)  # validate bit width
-    if int(b) == 0:
+    a_int = int(a)
+    b_int = int(b)
+    if b_int == 0:
         raise ZeroDivisionError("division by zero")
-    total = int(a) // int(b)
-    return clamp(total, bits, signed)
+    if not signed and (a_int < 0 or b_int < 0):
+        return 0, True
+
+    abs_a = abs(a_int)
+    abs_b = abs(b_int)
+    quotient = abs_a // abs_b
+    if (a_int < 0) ^ (b_int < 0):
+        quotient = -quotient
+    return clamp(quotient, bits, signed)
 
 
 def sat_mod(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
     """Compute ``a`` modulo ``b`` with saturating semantics."""
     bounds(bits, signed)  # validate bit width
-    if int(b) == 0:
+    a_int = int(a)
+    b_int = int(b)
+    if b_int == 0:
         raise ZeroDivisionError("integer modulo by zero")
-    total = int(a) % int(b)
-    return clamp(total, bits, signed)
+    if not signed and (a_int < 0 or b_int < 0):
+        return 0, True
+
+    abs_a = abs(a_int)
+    abs_b = abs(b_int)
+    quotient = abs_a // abs_b
+    if (a_int < 0) ^ (b_int < 0):
+        quotient = -quotient
+    remainder = a_int - quotient * b_int
+    return clamp(remainder, bits, signed)
 
 
 __all__ = [
