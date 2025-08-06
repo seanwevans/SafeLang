@@ -1,5 +1,9 @@
 from pathlib import Path
+
+import pytest
+
 from safelang import parse_functions, compile_to_nasm
+from safelang.compiler import _parse_space
 
 
 def test_compile_to_nasm(tmp_path):
@@ -14,3 +18,16 @@ def test_compile_to_nasm(tmp_path):
     out = tmp_path / "out.asm"
     out.write_text(asm)
     assert out.read_text().startswith("; Auto-generated NASM")
+
+
+def test_parse_space_units():
+    assert _parse_space("1B") == 1
+    assert _parse_space("2KB") == 2 * 1024
+    assert _parse_space("3MB") == 3 * 1024 * 1024
+
+
+def test_parse_space_invalid():
+    with pytest.raises(ValueError):
+        _parse_space("10XB")
+    with pytest.raises(ValueError):
+        _parse_space("foo")

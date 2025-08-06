@@ -54,10 +54,46 @@ def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
 
 
 def _parse_space(space: str) -> int:
-    match = re.match(r"([0-9_]+)B", space)
+    """Parse a memory size string into bytes.
+
+    Recognizes suffixes like ``B``, ``KB``, ``MB`` and converts the numeric
+    portion (allowing underscores for readability) into its byte equivalent.
+
+    Parameters
+    ----------
+    space: str
+        A string representing the memory size (e.g. ``"4KB"``).
+
+    Returns
+    -------
+    int
+        The size in bytes.
+
+    Raises
+    ------
+    ValueError
+        If the format is not recognized.
+    """
+
+    space = space.strip().upper()
+    match = re.fullmatch(r"([0-9_]+)([KMGT]?B)", space)
     if not match:
-        return 0
-    return int(match.group(1).replace("_", ""))
+        raise ValueError(f"Unrecognized space format: {space}")
+
+    number = int(match.group(1).replace("_", ""))
+    suffix = match.group(2)
+    multipliers = {
+        "B": 1,
+        "KB": 1024,
+        "MB": 1024**2,
+        "GB": 1024**3,
+        "TB": 1024**4,
+    }
+
+    try:
+        return number * multipliers[suffix]
+    except KeyError as exc:
+        raise ValueError(f"Unrecognized space format: {space}") from exc
 
 
 def compile_to_nasm(funcs: List[FunctionDef]) -> str:
