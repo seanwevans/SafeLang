@@ -130,3 +130,9 @@ def test_time_missing_unit():
     src = 'function "foo" {\n@space 1B\n@time 10\nconsume { nil }\nemit { nil }\n}'
     errors = _verify(src)
     assert errors == ["Function foo invalid @time value"]
+
+
+def test_numeric_with_underscores():
+    src = 'function "foo" {\n@space 1_024B\n@time 1_000ns\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == []
