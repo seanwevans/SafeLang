@@ -58,6 +58,7 @@ function "add" {
     assert "mov rax, rdi" in asm
     assert "add rax, rsi" in asm
 
+
 def test_generate_c_unknown_type_raises():
     funcs = _load_bad_funcs()
     with pytest.raises(ValueError, match="Unknown type: foo"):
@@ -68,4 +69,3 @@ def test_generate_rust_unknown_type_raises():
     funcs = _load_bad_funcs()
     with pytest.raises(ValueError, match="Unknown type: foo"):
         generate_rust(funcs)
-
