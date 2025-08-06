@@ -27,6 +27,8 @@ def _sanitize(text: str) -> str:
     length = len(text)
     in_string = None
     in_block_comment = False
+    string_start = None
+    block_start = None
 
     while i < length:
         ch = text[i]
@@ -49,6 +51,7 @@ def _sanitize(text: str) -> str:
 
         if text.startswith("/*", i):
             in_block_comment = True
+            block_start = i
             result.append("  ")
             i += 2
             continue
@@ -67,12 +70,20 @@ def _sanitize(text: str) -> str:
 
         if ch in {'"', "'"}:
             in_string = ch
+            string_start = i
             result.append(" ")
             i += 1
             continue
 
         result.append(ch)
         i += 1
+
+    if in_block_comment:
+        line = text.count("\n", 0, block_start) + 1
+        raise ValueError(f"Unterminated block comment starting at line {line}")
+    if in_string:
+        line = text.count("\n", 0, string_start) + 1
+        raise ValueError(f"Unterminated string starting at line {line}")
 
     return "".join(result)
 
