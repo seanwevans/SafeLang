@@ -1,8 +1,7 @@
 from pathlib import Path
 
+from safelang import parse_functions, generate_c, generate_rust, compile_to_nasm
 import pytest
-
-from safelang import parse_functions, generate_c, generate_rust
 
 
 def _load_example_funcs():
@@ -34,6 +33,31 @@ def test_generate_rust_contains_clamp_params():
     assert "pub fn clamp_params" in rust_code
 
 
+def test_compile_to_nasm_simple_add():
+    src = """
+function "add" {
+    @space 0B
+    @time 0ns
+
+    consume {
+        int64(a)
+        int64(b)
+    }
+
+    emit {
+        int64(r)
+    }
+
+    return a + b
+}
+"""
+    funcs = parse_functions(src)
+    asm = compile_to_nasm(funcs)
+    assert "global add" in asm
+    assert "add:" in asm
+    assert "mov rax, rdi" in asm
+    assert "add rax, rsi" in asm
+
 def test_generate_c_unknown_type_raises():
     funcs = _load_bad_funcs()
     with pytest.raises(ValueError, match="Unknown type: foo"):
@@ -44,3 +68,4 @@ def test_generate_rust_unknown_type_raises():
     funcs = _load_bad_funcs()
     with pytest.raises(ValueError, match="Unknown type: foo"):
         generate_rust(funcs)
+
