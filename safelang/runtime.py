@@ -43,26 +43,61 @@ def clamp(value: int, bits: int, signed: bool) -> Tuple[int, bool]:
 
 
 def sat_add(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
-    """Add ``a`` and ``b`` with saturating semantics."""
-    total = int(a) + int(b)
+    """Add ``a`` and ``b`` with saturating semantics.
+
+    Raises:
+        ValueError: If ``signed`` is ``False`` and either operand is negative.
+    """
+    ia, ib = int(a), int(b)
+    if not signed and (ia < 0 or ib < 0):
+        raise ValueError("negative operands not allowed in unsigned mode")
+    total = ia + ib
     return clamp(total, bits, signed)
 
 
 def sat_sub(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
-    """Subtract ``b`` from ``a`` with saturating semantics."""
-    total = int(a) - int(b)
+    """Subtract ``b`` from ``a`` with saturating semantics.
+
+    Raises:
+        ValueError: If ``signed`` is ``False`` and either operand is negative.
+    """
+    ia, ib = int(a), int(b)
+    if not signed and (ia < 0 or ib < 0):
+        raise ValueError("negative operands not allowed in unsigned mode")
+    total = ia - ib
     return clamp(total, bits, signed)
 
 
 def sat_mul(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
-    """Multiply ``a`` and ``b`` with saturating semantics."""
-    total = int(a) * int(b)
+    """Multiply ``a`` and ``b`` with saturating semantics.
+
+    Raises:
+        ValueError: If ``signed`` is ``False`` and either operand is negative.
+    """
+    ia, ib = int(a), int(b)
+    if not signed and (ia < 0 or ib < 0):
+        raise ValueError("negative operands not allowed in unsigned mode")
+    total = ia * ib
     return clamp(total, bits, signed)
 
 
 def sat_div(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
-    """Divide ``a`` by ``b`` with saturating semantics."""
+    """Divide ``a`` by ``b`` with saturating semantics.
+
+    Raises:
+        ZeroDivisionError: If ``b`` is zero.
+        ValueError: If ``signed`` is ``False`` and either operand is negative.
+    """
     bounds(bits, signed)  # validate bit width
+
+    ia, ib = int(a), int(b)
+    if ib == 0:
+        raise ZeroDivisionError("division by zero")
+    if not signed and (ia < 0 or ib < 0):
+        raise ValueError("negative operands not allowed in unsigned mode")
+    total = ia // ib
+    return clamp(total, bits, signed)
+
     a_int = int(a)
     b_int = int(b)
     if b_int == 0:
@@ -77,10 +112,22 @@ def sat_div(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
         quotient = -quotient
     return clamp(quotient, bits, signed)
 
-
 def sat_mod(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
-    """Compute ``a`` modulo ``b`` with saturating semantics."""
+    """Compute ``a`` modulo ``b`` with saturating semantics.
+
+    Raises:
+        ZeroDivisionError: If ``b`` is zero.
+        ValueError: If ``signed`` is ``False`` and either operand is negative.
+    """
     bounds(bits, signed)  # validate bit width
+    ia, ib = int(a), int(b)
+    if ib == 0:
+        raise ZeroDivisionError("integer modulo by zero")
+    if not signed and (ia < 0 or ib < 0):
+        raise ValueError("negative operands not allowed in unsigned mode")
+    total = ia % ib
+    return clamp(total, bits, signed)
+
     a_int = int(a)
     b_int = int(b)
     if b_int == 0:
