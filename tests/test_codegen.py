@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from safelang import parse_functions, generate_c, generate_rust
+from safelang import parse_functions, generate_c, generate_rust, compile_to_nasm
 
 
 def _load_example_funcs():
@@ -19,3 +19,29 @@ def test_generate_rust_contains_clamp_params():
     funcs = _load_example_funcs()
     rust_code = generate_rust(funcs)
     assert "pub fn clamp_params" in rust_code
+
+
+def test_compile_to_nasm_simple_add():
+    src = """
+function "add" {
+    @space 0B
+    @time 0ns
+
+    consume {
+        int64(a)
+        int64(b)
+    }
+
+    emit {
+        int64(r)
+    }
+
+    return a + b
+}
+"""
+    funcs = parse_functions(src)
+    asm = compile_to_nasm(funcs)
+    assert "global add" in asm
+    assert "add:" in asm
+    assert "mov rax, rdi" in asm
+    assert "add rax, rsi" in asm
