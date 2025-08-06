@@ -112,6 +112,7 @@ def sat_div(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
         quotient = -quotient
     return clamp(quotient, bits, signed)
 
+
 def sat_mod(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
     """Compute ``a`` modulo ``b`` with saturating semantics.
 
