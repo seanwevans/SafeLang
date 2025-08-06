@@ -56,6 +56,11 @@ def test_sat_add_unsigned_saturates_max():
     assert saturated
 
 
+def test_sat_add_unsigned_negative_error():
+    with pytest.raises(ValueError):
+        rt.sat_add(-1, 2, 8, signed=False)
+
+
 def test_sat_sub_unsigned_normal():
     value, saturated = rt.sat_sub(20, 10, 8, signed=False)
     assert value == 10
@@ -66,6 +71,11 @@ def test_sat_sub_unsigned_saturates_min():
     value, saturated = rt.sat_sub(10, 20, 8, signed=False)
     assert value == 0
     assert saturated
+
+
+def test_sat_sub_unsigned_negative_error():
+    with pytest.raises(ValueError):
+        rt.sat_sub(-1, 1, 8, signed=False)
 
 
 def test_sat_mul_unsigned_normal():
@@ -80,10 +90,9 @@ def test_sat_mul_unsigned_saturates_max():
     assert saturated
 
 
-def test_sat_mul_unsigned_saturates_min():
-    value, saturated = rt.sat_mul(-20, 20, 8, signed=False)
-    assert value == 0
-    assert saturated
+def test_sat_mul_unsigned_negative_error():
+    with pytest.raises(ValueError):
+        rt.sat_mul(-20, 20, 8, signed=False)
 
 
 def test_no_saturating_overflow_export():
@@ -157,10 +166,9 @@ def test_sat_div_unsigned_saturates_max():
     assert saturated
 
 
-def test_sat_div_unsigned_saturates_min():
-    value, saturated = rt.sat_div(-20, 2, 8, signed=False)
-    assert value == 0
-    assert saturated
+def test_sat_div_unsigned_negative_error():
+    with pytest.raises(ValueError):
+        rt.sat_div(-20, 2, 8, signed=False)
 
 
 def test_division_by_zero():
@@ -198,10 +206,9 @@ def test_sat_mod_unsigned_saturates_max():
     assert saturated
 
 
-def test_sat_mod_unsigned_saturates_min():
-    value, saturated = rt.sat_mod(5, -2, 8, signed=False)
-    assert value == 0
-    assert saturated
+def test_sat_mod_unsigned_negative_error():
+    with pytest.raises(ValueError):
+        rt.sat_mod(5, -2, 8, signed=False)
 
 
 def test_invalid_bit_width_sat_div():
