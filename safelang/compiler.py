@@ -41,9 +41,12 @@ def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
     """Parse parameters from ``consume`` block lines."""
     params: List[str] = []
     for ln in lines:
-        match = _PARAM_RE.search(ln)
-        if not match:
+        stripped = ln.split("#", 1)[0].split("!", 1)[0].strip()
+        if stripped == "nil":
             continue
+        match = _PARAM_RE.fullmatch(stripped)
+        if not match:
+            raise ValueError(f"Malformed parameter: {ln}")
         typ, name = match.group(1), match.group(2)
         mapped = type_map.get(typ)
         if mapped is None:

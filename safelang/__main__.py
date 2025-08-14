@@ -49,13 +49,17 @@ def main() -> int:
         except OSError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
-    if args.emit_c:
-        print(generate_c(funcs))
-    elif args.emit_rust:
-        print(generate_rust(funcs))
-    else:
-        print(f"Parsed {len(funcs)} functions successfully.")
-    return 0
+    try:
+        if args.emit_c:
+            print(generate_c(funcs))
+        elif args.emit_rust:
+            print(generate_rust(funcs))
+        else:
+            print(f"Parsed {len(funcs)} functions successfully.")
+        return 0
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

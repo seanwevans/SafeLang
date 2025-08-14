@@ -90,20 +90,12 @@ def sat_div(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
     """
     bounds(bits, signed)  # validate bit width
 
-    ia, ib = int(a), int(b)
-    if ib == 0:
-        raise ZeroDivisionError("division by zero")
-    if not signed and (ia < 0 or ib < 0):
-        raise ValueError("negative operands not allowed in unsigned mode")
-    total = ia // ib
-    return clamp(total, bits, signed)
-
     a_int = int(a)
     b_int = int(b)
     if b_int == 0:
         raise ZeroDivisionError("division by zero")
     if not signed and (a_int < 0 or b_int < 0):
-        return 0, True
+        raise ValueError("negative operands not allowed in unsigned mode")
 
     abs_a = abs(a_int)
     abs_b = abs(b_int)
@@ -121,20 +113,13 @@ def sat_mod(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
         ValueError: If ``signed`` is ``False`` and either operand is negative.
     """
     bounds(bits, signed)  # validate bit width
-    ia, ib = int(a), int(b)
-    if ib == 0:
-        raise ZeroDivisionError("integer modulo by zero")
-    if not signed and (ia < 0 or ib < 0):
-        raise ValueError("negative operands not allowed in unsigned mode")
-    total = ia % ib
-    return clamp(total, bits, signed)
 
     a_int = int(a)
     b_int = int(b)
     if b_int == 0:
         raise ZeroDivisionError("integer modulo by zero")
     if not signed and (a_int < 0 or b_int < 0):
-        return 0, True
+        raise ValueError("negative operands not allowed in unsigned mode")
 
     abs_a = abs(a_int)
     abs_b = abs(b_int)
