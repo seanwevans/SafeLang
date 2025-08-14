@@ -77,7 +77,7 @@ def test_cli_emit_rust():
 
 def test_cli_emit_c_malformed(tmp_path):
     malformed_src = (
-        '@init\n'
+        "@init\n"
         'function "init" {\n'
         "    @space 1B\n"
         "    @time 1ns\n"
