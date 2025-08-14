@@ -48,6 +48,12 @@ def test_sat_add_js_matches_py():
         assert (js_val, js_sat) == (py_val, py_sat)
 
 
+def test_sat_add_unsigned_negative_error_js():
+    with pytest.raises(subprocess.CalledProcessError) as exc:
+        _run_js("rt.satAdd(-1, 2, 8, false);")
+    assert "negative operands not allowed in unsigned mode" in exc.value.stderr
+
+
 # Test satSub
 
 
@@ -61,6 +67,12 @@ def test_sat_sub_js_matches_py():
         py_val, py_sat = rt.sat_sub(a, b, 8, True)
         js_val, js_sat = _call_js("satSub", a, b, 8, True)
         assert (js_val, js_sat) == (py_val, py_sat)
+
+
+def test_sat_sub_unsigned_negative_error_js():
+    with pytest.raises(subprocess.CalledProcessError) as exc:
+        _run_js("rt.satSub(-1, 1, 8, false);")
+    assert "negative operands not allowed in unsigned mode" in exc.value.stderr
 
 
 # Test satMul
@@ -78,6 +90,12 @@ def test_sat_mul_js_matches_py():
         assert (js_val, js_sat) == (py_val, py_sat)
 
 
+def test_sat_mul_unsigned_negative_error_js():
+    with pytest.raises(subprocess.CalledProcessError) as exc:
+        _run_js("rt.satMul(-2, 3, 8, false);")
+    assert "negative operands not allowed in unsigned mode" in exc.value.stderr
+
+
 # Test satDiv
 
 
@@ -93,6 +111,12 @@ def test_sat_div_js_matches_py():
         assert (js_val, js_sat) == (py_val, py_sat)
 
 
+def test_sat_div_unsigned_negative_error_js():
+    with pytest.raises(subprocess.CalledProcessError) as exc:
+        _run_js("rt.satDiv(-4, 2, 8, false);")
+    assert "negative operands not allowed in unsigned mode" in exc.value.stderr
+
+
 # Test satMod
 
 
@@ -106,6 +130,12 @@ def test_sat_mod_js_matches_py():
         py_val, py_sat = rt.sat_mod(a, b, 8, True)
         js_val, js_sat = _call_js("satMod", a, b, 8, True)
         assert (js_val, js_sat) == (py_val, py_sat)
+
+
+def test_sat_mod_unsigned_negative_error_js():
+    with pytest.raises(subprocess.CalledProcessError) as exc:
+        _run_js("rt.satMod(5, -2, 8, false);")
+    assert "negative operands not allowed in unsigned mode" in exc.value.stderr
 
 
 def test_invalid_bit_width_bounds_js():
