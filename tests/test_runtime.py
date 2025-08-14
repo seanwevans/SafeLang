@@ -247,3 +247,13 @@ def test_invalid_bit_width_sat_mod():
         rt.sat_mod(1, 1, 0, True)
     with pytest.raises(ValueError):
         rt.sat_mod(1, 1, 64, True)
+
+
+def test_sat_div_zero_precedence_over_invalid_bits():
+    with pytest.raises(ZeroDivisionError):
+        rt.sat_div(1, 0, 0, signed=True)
+
+
+def test_sat_mod_zero_precedence_over_invalid_bits():
+    with pytest.raises(ZeroDivisionError):
+        rt.sat_mod(1, 0, 0, signed=True)

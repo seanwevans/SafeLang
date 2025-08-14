@@ -88,27 +88,16 @@ def sat_div(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
         ZeroDivisionError: If ``b`` is zero.
         ValueError: If ``signed`` is ``False`` and either operand is negative.
     """
-    bounds(bits, signed)  # validate bit width
-
     ia, ib = int(a), int(b)
     if ib == 0:
         raise ZeroDivisionError("division by zero")
     if not signed and (ia < 0 or ib < 0):
         raise ValueError("negative operands not allowed in unsigned mode")
-    total = ia // ib
-    return clamp(total, bits, signed)
 
-    a_int = int(a)
-    b_int = int(b)
-    if b_int == 0:
-        raise ZeroDivisionError("division by zero")
-    if not signed and (a_int < 0 or b_int < 0):
-        return 0, True
-
-    abs_a = abs(a_int)
-    abs_b = abs(b_int)
+    abs_a = abs(ia)
+    abs_b = abs(ib)
     quotient = abs_a // abs_b
-    if (a_int < 0) ^ (b_int < 0):
+    if (ia < 0) ^ (ib < 0):
         quotient = -quotient
     return clamp(quotient, bits, signed)
 
@@ -120,28 +109,18 @@ def sat_mod(a: int, b: int, bits: int, signed: bool = True) -> Tuple[int, bool]:
         ZeroDivisionError: If ``b`` is zero.
         ValueError: If ``signed`` is ``False`` and either operand is negative.
     """
-    bounds(bits, signed)  # validate bit width
     ia, ib = int(a), int(b)
     if ib == 0:
         raise ZeroDivisionError("integer modulo by zero")
     if not signed and (ia < 0 or ib < 0):
         raise ValueError("negative operands not allowed in unsigned mode")
-    total = ia % ib
-    return clamp(total, bits, signed)
 
-    a_int = int(a)
-    b_int = int(b)
-    if b_int == 0:
-        raise ZeroDivisionError("integer modulo by zero")
-    if not signed and (a_int < 0 or b_int < 0):
-        return 0, True
-
-    abs_a = abs(a_int)
-    abs_b = abs(b_int)
+    abs_a = abs(ia)
+    abs_b = abs(ib)
     quotient = abs_a // abs_b
-    if (a_int < 0) ^ (b_int < 0):
+    if (ia < 0) ^ (ib < 0):
         quotient = -quotient
-    remainder = a_int - quotient * b_int
+    remainder = ia - quotient * ib
     return clamp(remainder, bits, signed)
 
 
