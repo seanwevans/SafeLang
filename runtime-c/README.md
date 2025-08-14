@@ -11,8 +11,9 @@ result and a flag indicating whether saturation occurred.
 sl_result_t sl_sat_add(int64_t a, int64_t b, int bits, bool signed);
 ```
 
-All operations abort on invalid bit width or division by zero. The
-functions support bit widths up to 63 bits.
+All operations abort on invalid bit width, division by zero, or when
+negative operands are supplied to unsigned arithmetic. The functions
+support bit widths up to 63 bits.
 
 Compile the runtime into a static library:
 

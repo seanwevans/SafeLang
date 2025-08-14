@@ -20,19 +20,19 @@ void sl_bounds(int bits, bool signed_arith, int64_t *min_out, int64_t *max_out);
 /** Clamp the given value to the representable range. */
 sl_result_t sl_clamp(int64_t value, int bits, bool signed_arith);
 
-/** Saturating addition. */
+/** Saturating addition. Aborts if unsigned and either operand is negative. */
 sl_result_t sl_sat_add(int64_t a, int64_t b, int bits, bool signed_arith);
 
-/** Saturating subtraction. */
+/** Saturating subtraction. Aborts if unsigned and either operand is negative. */
 sl_result_t sl_sat_sub(int64_t a, int64_t b, int bits, bool signed_arith);
 
-/** Saturating multiplication. */
+/** Saturating multiplication. Aborts if unsigned and either operand is negative. */
 sl_result_t sl_sat_mul(int64_t a, int64_t b, int bits, bool signed_arith);
 
-/** Saturating division. Division by zero aborts. */
+/** Saturating division. Aborts on division by zero or if unsigned with negative operands. */
 sl_result_t sl_sat_div(int64_t a, int64_t b, int bits, bool signed_arith);
 
-/** Saturating modulo. Division by zero aborts. */
+/** Saturating modulo. Aborts on division by zero or if unsigned with negative operands. */
 sl_result_t sl_sat_mod(int64_t a, int64_t b, int bits, bool signed_arith);
 
 #ifdef __cplusplus
