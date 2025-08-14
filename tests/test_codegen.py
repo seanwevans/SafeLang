@@ -20,6 +20,17 @@ function "bad" {
     return parse_functions(src)
 
 
+def _load_malformed_funcs():
+    src = """
+function "bad" {
+    @space 0B
+    @time 0
+    consume { int64 x }
+}
+"""
+    return parse_functions(src)
+
+
 def test_generate_c_contains_clamp_params():
     funcs = _load_example_funcs()
     c_code = generate_c(funcs)
@@ -68,4 +79,16 @@ def test_generate_c_unknown_type_raises():
 def test_generate_rust_unknown_type_raises():
     funcs = _load_bad_funcs()
     with pytest.raises(ValueError, match="Unknown type: foo"):
+        generate_rust(funcs)
+
+
+def test_generate_c_malformed_param_raises():
+    funcs = _load_malformed_funcs()
+    with pytest.raises(ValueError, match="Malformed parameter"):
+        generate_c(funcs)
+
+
+def test_generate_rust_malformed_param_raises():
+    funcs = _load_malformed_funcs()
+    with pytest.raises(ValueError, match="Malformed parameter"):
         generate_rust(funcs)

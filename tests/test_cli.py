@@ -75,6 +75,33 @@ def test_cli_emit_rust():
     assert "pub fn clamp_params(" in result.stdout
 
 
+def test_cli_emit_c_malformed(tmp_path):
+    malformed_src = (
+        '@init\n'
+        'function "init" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume { nil }\n"
+        "    emit { nil }\n"
+        "}\n"
+        'function "foo" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume { int64 x }\n"
+        "    emit { nil }\n"
+        "}\n"
+    )
+    malformed_file = tmp_path / "malformed.slang"
+    malformed_file.write_text(malformed_src)
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--emit-c", str(malformed_file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "ERROR" in result.stderr
+
+
 def test_cli_emit_nasm(tmp_path):
     src = Path(__file__).resolve().parents[1] / "example.slang"
     out_file = tmp_path / "out.asm"
