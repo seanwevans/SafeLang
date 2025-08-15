@@ -70,6 +70,32 @@ function "add" {
     assert "add rax, rsi" in asm
 
 
+def test_compile_to_nasm_too_many_params():
+    src = """
+function "many" {
+    @space 0B
+    @time 0ns
+
+    consume {
+        int64(p1)
+        int64(p2)
+        int64(p3)
+        int64(p4)
+        int64(p5)
+        int64(p6)
+        int64(p7)
+    }
+
+    emit { int64(r) }
+
+    return p1
+}
+"""
+    funcs = parse_functions(src)
+    with pytest.raises(ValueError, match="too many parameters"):
+        compile_to_nasm(funcs)
+
+
 def test_generate_c_unknown_type_raises():
     funcs = _load_bad_funcs()
     with pytest.raises(ValueError, match="Unknown type: foo"):

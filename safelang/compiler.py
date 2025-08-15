@@ -187,8 +187,10 @@ def compile_to_nasm(funcs: List[FunctionDef]) -> str:
         var_regs = {}
         for idx, ln in enumerate(fn.consume):
             match = _PARAM_RE.search(ln)
-            if not match or idx >= len(_PARAM_REGS):
+            if not match:
                 continue
+            if idx >= len(_PARAM_REGS):
+                raise ValueError(f"{fn.name}: too many parameters")
             var_regs[match.group(2)] = _PARAM_REGS[idx]
 
         for stmt in _extract_body(fn.body):
