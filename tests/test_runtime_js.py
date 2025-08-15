@@ -108,6 +108,19 @@ def test_sat_mod_js_matches_py():
         assert (js_val, js_sat) == (py_val, py_sat)
 
 
+def test_unsigned_negative_operands_js():
+    with pytest.raises(subprocess.CalledProcessError):
+        _run_js("rt.satAdd(-1, 2, 8, false);")
+    with pytest.raises(subprocess.CalledProcessError):
+        _run_js("rt.satSub(-1, 1, 8, false);")
+    with pytest.raises(subprocess.CalledProcessError):
+        _run_js("rt.satMul(-20, 20, 8, false);")
+    with pytest.raises(subprocess.CalledProcessError):
+        _run_js("rt.satDiv(-20, 2, 8, false);")
+    with pytest.raises(subprocess.CalledProcessError):
+        _run_js("rt.satMod(5, -2, 8, false);")
+
+
 def test_invalid_bit_width_bounds_js():
     for bits in [0, -1, 64]:
         with pytest.raises(subprocess.CalledProcessError):

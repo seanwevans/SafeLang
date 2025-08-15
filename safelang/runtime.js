@@ -35,16 +35,25 @@ function clamp(value, bits, signed = true) {
 }
 
 function satAdd(a, b, bits, signed = true) {
+  if (!signed && (BigInt(a) < 0n || BigInt(b) < 0n)) {
+    throw new Error('negative operands not allowed in unsigned mode');
+  }
   const total = BigInt(a) + BigInt(b);
   return clamp(total, bits, signed);
 }
 
 function satSub(a, b, bits, signed = true) {
+  if (!signed && (BigInt(a) < 0n || BigInt(b) < 0n)) {
+    throw new Error('negative operands not allowed in unsigned mode');
+  }
   const total = BigInt(a) - BigInt(b);
   return clamp(total, bits, signed);
 }
 
 function satMul(a, b, bits, signed = true) {
+  if (!signed && (BigInt(a) < 0n || BigInt(b) < 0n)) {
+    throw new Error('negative operands not allowed in unsigned mode');
+  }
   const total = BigInt(a) * BigInt(b);
   return clamp(total, bits, signed);
 }
@@ -54,6 +63,9 @@ function satDiv(a, b, bits, signed = true) {
   if (BigInt(b) === 0n) {
     throw new Error('division by zero');
   }
+  if (!signed && (BigInt(a) < 0n || BigInt(b) < 0n)) {
+    throw new Error('negative operands not allowed in unsigned mode');
+  }
   const total = BigInt(a) / BigInt(b);
   return clamp(total, bits, signed);
 }
@@ -62,6 +74,9 @@ function satMod(a, b, bits, signed = true) {
   bounds(bits, signed); // validate bit width
   if (BigInt(b) === 0n) {
     throw new Error('integer modulo by zero');
+  }
+  if (!signed && (BigInt(a) < 0n || BigInt(b) < 0n)) {
+    throw new Error('negative operands not allowed in unsigned mode');
   }
   const total = BigInt(a) % BigInt(b);
   return clamp(total, bits, signed);
