@@ -23,6 +23,8 @@ def main() -> int:
         action="store_true",
         help="Output generated Rust instead of verification result",
     )
+    group.add_argument("--c-out", type=Path, help="Write generated C to file")
+    group.add_argument("--rust-out", type=Path, help="Write generated Rust to file")
     args = parser.parse_args()
 
     try:
@@ -50,10 +52,26 @@ def main() -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
     try:
-        if args.emit_c:
-            print(generate_c(funcs))
-        elif args.emit_rust:
-            print(generate_rust(funcs))
+        if args.emit_c or args.c_out:
+            code = generate_c(funcs)
+            if args.c_out:
+                try:
+                    args.c_out.write_text(code)
+                except OSError as exc:
+                    print(f"ERROR: {exc}", file=sys.stderr)
+                    return 1
+            else:
+                print(code)
+        elif args.emit_rust or args.rust_out:
+            code = generate_rust(funcs)
+            if args.rust_out:
+                try:
+                    args.rust_out.write_text(code)
+                except OSError as exc:
+                    print(f"ERROR: {exc}", file=sys.stderr)
+                    return 1
+            else:
+                print(code)
         else:
             print(f"Parsed {len(funcs)} functions successfully.")
         return 0
