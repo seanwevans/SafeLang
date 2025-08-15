@@ -101,9 +101,7 @@ def test_block_comment():
 
 def test_nested_block_comment_error():
     src = 'function "foo" { /* outer /* inner */ outer end */ }'
-    with pytest.raises(
-        ValueError, match="Nested block comments are not supported"
-    ):
+    with pytest.raises(ValueError, match="Nested block comments are not supported"):
         parse_functions(src)
 
 
