@@ -75,6 +75,32 @@ def test_cli_emit_rust():
     assert "pub fn clamp_params(" in result.stdout
 
 
+def test_cli_c_out(tmp_path):
+    file = Path(__file__).resolve().parents[1] / "example.slang"
+    out_file = tmp_path / "out.c"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--c-out", str(out_file), str(file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert result.stdout == ""
+    assert "#include <stdint.h>" in out_file.read_text()
+
+
+def test_cli_rust_out(tmp_path):
+    file = Path(__file__).resolve().parents[1] / "example.slang"
+    out_file = tmp_path / "out.rs"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--rust-out", str(out_file), str(file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert result.stdout == ""
+    assert "pub fn clamp_params(" in out_file.read_text()
+
+
 def test_cli_emit_c_malformed(tmp_path):
     malformed_src = (
         "@init\n"
