@@ -33,6 +33,8 @@ def _sanitize(text: str) -> str:
     while i < length:
         ch = text[i]
         if in_block_comment:
+            if text.startswith("/*", i):
+                raise ValueError("Nested block comments are not supported")
             if ch == "*" and i + 1 < length and text[i + 1] == "/":
                 result.append("  ")
                 i += 2

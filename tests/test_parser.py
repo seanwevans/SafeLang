@@ -99,6 +99,14 @@ def test_block_comment():
     assert len(funcs) == 1
 
 
+def test_nested_block_comment_error():
+    src = 'function "foo" { /* outer /* inner */ outer end */ }'
+    with pytest.raises(
+        ValueError, match="Nested block comments are not supported"
+    ):
+        parse_functions(src)
+
+
 def test_unterminated_block_comment():
     src = 'function "foo" { /* comment'
     with pytest.raises(ValueError, match="Unterminated block comment"):
