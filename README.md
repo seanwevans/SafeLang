@@ -1,6 +1,7 @@
 # SafeLang
 
 ![Coverage](coverage.svg)
+[![CI](https://github.com/seanwevans/SafeLang/actions/workflows/ci.yml/badge.svg)](https://github.com/seanwevans/SafeLang/actions/workflows/ci.yml)
 
 SafeLang is a programming language designed for **hard real-time, safety-critical embedded systems**, inspired by NASA's 10 rules for developing safety-critical code. It aims to produce software that is provably safe, resilient to overflow and misuse, and adversarially verified.
 
