@@ -136,3 +136,15 @@ def test_numeric_with_underscores():
     src = 'function "foo" {\n@space 1_024B\n@time 1_000ns\nconsume { nil }\nemit { nil }\n}'
     errors = _verify(src)
     assert errors == []
+
+
+def test_space_kilobytes():
+    src = 'function "kbytes" {\n@space 1KB\n@time 1ns\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == []
+
+
+def test_space_megabytes():
+    src = 'function "mbytes" {\n@space 2MB\n@time 1ns\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == []

@@ -259,7 +259,7 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
 
         _validate_numeric_attr(
             fn.space,
-            r"[0-9_]+B",
+            r"[0-9_]+[KMGT]?B",
             errors,
             f"Function {fn.name} missing @space",
             f"Function {fn.name} invalid @space value",
