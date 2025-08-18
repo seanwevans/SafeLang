@@ -48,7 +48,16 @@ def _sanitize(text: str) -> str:
         if in_string:
             result.append("\n" if ch == "\n" else " ")
             if ch == in_string:
-                in_string = None
+                # Count preceding backslashes to see if this quote is escaped.
+                bs_count = 0
+                j = i - 1
+                while j >= 0 and text[j] == "\\":
+                    bs_count += 1
+                    j -= 1
+                # Only terminate the string if the number of backslashes is even
+                # (i.e. the quote is not escaped).
+                if bs_count % 2 == 0:
+                    in_string = None
             i += 1
             continue
 

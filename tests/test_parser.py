@@ -57,6 +57,18 @@ def test_braces_in_string():
     assert len(funcs) == 1
 
 
+def test_escaped_double_quote_in_string():
+    src = 'function "foo" { msg = "say \"hi\"" }'
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
+
+
+def test_escaped_single_quote_in_string():
+    src = "function \"foo\" { msg = 'it\\'s fine' }"
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
+
+
 def test_line_start_hash_comment():
     src = (
         'function "foo" {\n'
