@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from safelang import parse_functions, compile_to_nasm
-from safelang.compiler import _parse_space
+from safelang.compiler import _parse_space, _compile_expr
 
 
 def test_compile_to_nasm(tmp_path):
@@ -18,6 +18,21 @@ def test_compile_to_nasm(tmp_path):
     out = tmp_path / "out.asm"
     out.write_text(asm)
     assert out.read_text().startswith("; Auto-generated NASM")
+
+
+def test_compile_expr_addition():
+    var_regs = {"a": "rdi", "b": "rsi"}
+    assert _compile_expr("a+b", var_regs) == ["mov rax, rdi", "add rax, rsi"]
+
+
+def test_compile_expr_subtraction():
+    var_regs = {"a": "rdi", "b": "rsi"}
+    assert _compile_expr("a-b", var_regs) == ["mov rax, rdi", "sub rax, rsi"]
+
+
+def test_compile_expr_unary_minus():
+    var_regs = {"a": "rdi"}
+    assert _compile_expr("-a", var_regs) == ["mov rax, 0", "sub rax, rdi"]
 
 
 def test_parse_space_units():

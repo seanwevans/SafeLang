@@ -109,12 +109,22 @@ def _mov_to_rax(token: str, var_regs: dict) -> str:
     return f"mov rax, {src}"
 
 
+_TOKEN_RE = re.compile(r"\w+|[-+*/]")
+
+
+def _tokenize(expr: str) -> List[str]:
+    return _TOKEN_RE.findall(expr)
+
+
 def _compile_expr(expr: str, var_regs: dict) -> List[str]:
-    tokens = expr.split()
+    tokens = _tokenize(expr)
     if not tokens:
         return []
     if len(tokens) == 1:
         return [_mov_to_rax(tokens[0], var_regs)]
+    if len(tokens) == 2 and tokens[0] == "-":
+        rhs_val = var_regs.get(tokens[1], tokens[1])
+        return ["mov rax, 0", f"sub rax, {rhs_val}"]
     if len(tokens) == 3:
         lhs, op, rhs = tokens
         code = [_mov_to_rax(lhs, var_regs)]
