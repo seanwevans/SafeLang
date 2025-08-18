@@ -58,7 +58,7 @@ def test_braces_in_string():
 
 
 def test_escaped_double_quote_in_string():
-    src = 'function "foo" { msg = "say \"hi\"" }'
+    src = 'function "foo" { msg = "say "hi"" }'
     funcs = parse_functions(src)
     assert len(funcs) == 1
 
