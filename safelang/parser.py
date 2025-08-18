@@ -1,6 +1,7 @@
 """Very minimal SafeLang parser for demonstration purposes."""
 
 import re
+from bisect import bisect_right
 from dataclasses import dataclass, field
 from typing import List
 
@@ -124,6 +125,8 @@ def parse_functions(text: str) -> List[FunctionDef]:
         offsets.append(pos)
         pos += len(ln) + 1
 
+    newline_positions = [idx for idx, ch in enumerate(sanitized) if ch == "\n"]
+
     i = 0
     while i < len(san_lines):
         line_san = san_lines[i].strip()
@@ -199,7 +202,7 @@ def parse_functions(text: str) -> List[FunctionDef]:
                 )
             )
 
-            i = sanitized.count("\n", 0, end_pos) + 1
+            i = bisect_right(newline_positions, end_pos) + 1
             continue
 
         i += 1
