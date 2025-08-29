@@ -3,7 +3,13 @@ from pathlib import Path
 import pytest
 
 from safelang import parse_functions, compile_to_nasm
-from safelang.compiler import _parse_space, _compile_expr
+from safelang.compiler import (
+    _parse_space,
+    _compile_expr,
+    _parse_params,
+    _C_TYPE_MAP,
+    _RUST_TYPE_MAP,
+)
 
 
 def test_compile_to_nasm(tmp_path):
@@ -46,3 +52,12 @@ def test_parse_space_invalid():
         _parse_space("10XB")
     with pytest.raises(ValueError):
         _parse_space("foo")
+
+
+@pytest.mark.parametrize(
+    "style,type_map", [("c", _C_TYPE_MAP), ("rust", _RUST_TYPE_MAP)]
+)
+def test_parse_params_duplicate_names(style, type_map):
+    lines = ["int32(x)", "int32(x)"]
+    with pytest.raises(ValueError):
+        _parse_params(lines, type_map, style)
