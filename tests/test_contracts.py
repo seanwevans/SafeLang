@@ -148,3 +148,29 @@ def test_space_megabytes():
     src = 'function "mbytes" {\n@space 2MB\n@time 1ns\nconsume { nil }\nemit { nil }\n}'
     errors = _verify(src)
     assert errors == []
+
+
+def test_malformed_consume_entry():
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume { int64 x }\n"
+        "emit { nil }\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert "Function foo malformed consume entry: int64 x" in errors
+
+
+def test_malformed_emit_entry():
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume { nil }\n"
+        "emit { int64 x }\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert "Function foo malformed emit entry: int64 x" in errors

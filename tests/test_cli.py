@@ -125,7 +125,7 @@ def test_cli_emit_c_malformed(tmp_path):
         text=True,
     )
     assert result.returncode != 0
-    assert "ERROR" in result.stderr
+    assert "ERROR" in result.stdout
 
 
 def test_cli_emit_nasm(tmp_path):

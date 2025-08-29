@@ -5,6 +5,8 @@ from bisect import bisect_right
 from dataclasses import dataclass, field
 from typing import List
 
+_PARAM_RE = re.compile(r"(\w+)\(([^)]+)\)")
+
 
 @dataclass
 class FunctionDef:
@@ -286,8 +288,26 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
 
         if not fn.consume:
             errors.append(f"Function {fn.name} missing consume block")
+        else:
+            for entry in fn.consume:
+                stripped = entry.split("#", 1)[0].split("!", 1)[0].strip()
+                if stripped == "nil":
+                    continue
+                if not _PARAM_RE.fullmatch(stripped):
+                    errors.append(
+                        f"Function {fn.name} malformed consume entry: {entry.strip()}"
+                    )
         if not fn.emit:
             errors.append(f"Function {fn.name} missing emit block")
+        else:
+            for entry in fn.emit:
+                stripped = entry.split("#", 1)[0].split("!", 1)[0].strip()
+                if stripped == "nil":
+                    continue
+                if not _PARAM_RE.fullmatch(stripped):
+                    errors.append(
+                        f"Function {fn.name} malformed emit entry: {entry.strip()}"
+                    )
         if fn.lines > 128:
             errors.append(f"Function {fn.name} exceeds 128 line limit")
 
