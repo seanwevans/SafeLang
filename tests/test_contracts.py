@@ -150,6 +150,20 @@ def test_space_megabytes():
     assert errors == []
 
 
+def test_space_mixed_case_unit():
+    src = (
+        'function "mixspace" {\n@space 1kB\n@time 1ns\nconsume { nil }\nemit { nil }\n}'
+    )
+    errors = _verify(src)
+    assert errors == []
+
+
+def test_time_mixed_case_unit():
+    src = 'function "mixtime" {\n@space 1B\n@time 1NS\nconsume { nil }\nemit { nil }\n}'
+    errors = _verify(src)
+    assert errors == []
+
+
 def test_malformed_consume_entry():
     src = (
         'function "foo" {\n'

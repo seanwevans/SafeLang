@@ -269,7 +269,7 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
             init_count += 1
 
         _validate_numeric_attr(
-            fn.space,
+            fn.space.upper(),
             r"[0-9_]+[KMGT]?B",
             errors,
             f"Function {fn.name} missing @space",
@@ -278,7 +278,7 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
         )
 
         _validate_numeric_attr(
-            fn.time,
+            fn.time.lower(),
             r"[0-9_]+ns",
             errors,
             f"Function {fn.name} missing @time",
