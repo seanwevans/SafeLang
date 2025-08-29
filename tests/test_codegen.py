@@ -44,6 +44,30 @@ def test_generate_rust_contains_clamp_params():
     assert "pub fn clamp_params" in rust_code
 
 
+def test_generate_c_omits_annotations():
+    funcs = _load_example_funcs()
+    c_code = generate_c(funcs)
+    for ln in c_code.splitlines():
+        stripped = ln.strip()
+        assert not (
+            stripped.startswith("@space")
+            or stripped.startswith("consume")
+            or stripped.startswith("emit")
+        )
+
+
+def test_generate_rust_omits_annotations():
+    funcs = _load_example_funcs()
+    rust_code = generate_rust(funcs)
+    for ln in rust_code.splitlines():
+        stripped = ln.strip()
+        assert not (
+            stripped.startswith("@space")
+            or stripped.startswith("consume")
+            or stripped.startswith("emit")
+        )
+
+
 def test_compile_to_nasm_simple_add():
     src = """
 function "add" {

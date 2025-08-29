@@ -225,9 +225,8 @@ def generate_c(funcs: List[FunctionDef]) -> str:
             raise ValueError(f"{fn.name}: {exc}") from exc
         lines.append(f"/* {fn.name}: @space {fn.space} @time {fn.time} */")
         lines.append(f"void {fn.name}({', '.join(params)}) {{")
-        body = fn.body.strip().splitlines()
-        for b in body:
-            lines.append("    " + b.rstrip())
+        for b in _extract_body(fn.body):
+            lines.append(f"    {b}")
         lines.append("}")
 
         lines.append("")
@@ -244,9 +243,8 @@ def generate_rust(funcs: List[FunctionDef]) -> str:
             raise ValueError(f"{fn.name}: {exc}") from exc
         lines.append(f"// {fn.name}: @space {fn.space} @time {fn.time}")
         lines.append(f"pub fn {fn.name}({', '.join(params)}) {{")
-        body = fn.body.strip().splitlines()
-        for b in body:
-            lines.append("    " + b.rstrip())
+        for b in _extract_body(fn.body):
+            lines.append(f"    {b}")
         lines.append("}")
         lines.append("")
     return "\n".join(lines)
