@@ -40,6 +40,7 @@ _PARAM_RE = re.compile(r"(\w+)\(([^)]+)\)")
 def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
     """Parse parameters from ``consume`` block lines."""
     params: List[str] = []
+    seen = set()
     for ln in lines:
         stripped = ln.split("#", 1)[0].split("!", 1)[0].strip()
         if stripped == "nil":
@@ -48,6 +49,8 @@ def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
         if not match:
             raise ValueError(f"Malformed parameter: {ln}")
         typ, name = match.group(1), match.group(2)
+        if name in seen:
+            raise ValueError(f"Duplicate parameter name: {name}")
         mapped = type_map.get(typ)
         if mapped is None:
             raise ValueError(f"Unknown type: {typ}")
@@ -55,6 +58,7 @@ def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
             params.append(f"{mapped} {name}")
         else:  # rust
             params.append(f"{name}: {mapped}")
+        seen.add(name)
     return params
 
 
