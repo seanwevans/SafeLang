@@ -227,8 +227,9 @@ def generate_c(funcs: List[FunctionDef]) -> str:
             params = _parse_params(fn.consume, _C_TYPE_MAP, "c")
         except ValueError as exc:
             raise ValueError(f"{fn.name}: {exc}") from exc
+        param_list = ", ".join(params) if params else "void"
         lines.append(f"/* {fn.name}: @space {fn.space} @time {fn.time} */")
-        lines.append(f"void {fn.name}({', '.join(params)}) {{")
+        lines.append(f"void {fn.name}({param_list}) {{")
         for b in _extract_body(fn.body):
             lines.append(f"    {b}")
         lines.append("}")
