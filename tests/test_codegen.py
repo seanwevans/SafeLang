@@ -38,6 +38,24 @@ def test_generate_c_contains_clamp_params():
     assert "clamp_params" in c_code
 
 
+def test_generate_c_zero_params_emit_void():
+    src = """
+function "noop" {
+    @space 0B
+    @time 0ns
+
+    consume { nil }
+
+    emit { nil }
+
+    return
+}
+"""
+    funcs = parse_functions(src)
+    c_code = generate_c(funcs)
+    assert "void noop(void)" in c_code
+
+
 def test_generate_rust_contains_clamp_params():
     funcs = _load_example_funcs()
     rust_code = generate_rust(funcs)
