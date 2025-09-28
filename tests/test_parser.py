@@ -127,3 +127,24 @@ def test_unterminated_string():
     src = 'function "foo" { msg = "unterminated }'
     with pytest.raises(ValueError, match="Unterminated string"):
         parse_functions(src)
+
+
+def test_contract_blocks_preserve_comments_with_braces():
+    src = (
+        'function "foo" {\n'
+        '    @space 1B\n'
+        '    @time 1ns\n'
+        '    consume {\n'
+        '        // comment with } inside\n'
+        '        input(i8)\n'
+        '    }\n'
+        '    emit {\n'
+        '        ! comment } still inside\n'
+        '        output(i8)\n'
+        '    }\n'
+        '}\n'
+    )
+    funcs = parse_functions(src)
+    assert len(funcs) == 1
+    assert funcs[0].consume == ['// comment with } inside', 'input(i8)']
+    assert funcs[0].emit == ['! comment } still inside', 'output(i8)']

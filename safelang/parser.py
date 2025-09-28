@@ -181,8 +181,43 @@ def parse_functions(text: str) -> List[FunctionDef]:
 
             space_match = re.search(r"@space\s+(\S+)", body)
             time_match = re.search(r"@time\s+(\S+)", body)
-            consume_block = re.search(r"consume\s*{([^}]*)}", body, re.S)
-            emit_block = re.search(r"emit\s*{([^}]*)}", body, re.S)
+
+            body_sanitized = sanitized[next_open + 1 : end_pos]
+
+            def extract_contract(keyword: str) -> List[str]:
+                match = re.search(rf"\b{keyword}\b", body_sanitized)
+                if not match:
+                    return []
+
+                idx = match.end()
+                while idx < len(body_sanitized) and body_sanitized[idx].isspace():
+                    idx += 1
+
+                if idx >= len(body_sanitized) or body_sanitized[idx] != "{":
+                    raise ValueError(f"{keyword} block missing opening brace")
+
+                brace_start = idx
+                depth = 1
+                idx += 1
+                while idx < len(body_sanitized) and depth:
+                    ch = body_sanitized[idx]
+                    if ch == "{":
+                        depth += 1
+                    elif ch == "}":
+                        depth -= 1
+                        if depth == 0:
+                            brace_end = idx
+                            break
+                    idx += 1
+                else:
+                    raise ValueError(f"Unterminated {keyword} block")
+
+                block_text = body[brace_start + 1 : brace_end]
+                lines = block_text.strip().splitlines()
+                return [ln.strip() for ln in lines if ln.strip()]
+
+            consume_entries = extract_contract("consume")
+            emit_entries = extract_contract("emit")
 
             funcs.append(
                 FunctionDef(
@@ -190,24 +225,8 @@ def parse_functions(text: str) -> List[FunctionDef]:
                     space=space_match.group(1) if space_match else "",
                     time=time_match.group(1) if time_match else "",
                     body=body,
-                    consume=[
-                        ln.strip()
-                        for ln in (
-                            consume_block.group(1).strip().splitlines()
-                            if consume_block
-                            else []
-                        )
-                        if ln.strip()
-                    ],
-                    emit=[
-                        ln.strip()
-                        for ln in (
-                            emit_block.group(1).strip().splitlines()
-                            if emit_block
-                            else []
-                        )
-                        if ln.strip()
-                    ],
+                    consume=consume_entries,
+                    emit=emit_entries,
                     is_init=flagged_init,
                     lines=line_count,
                 )
