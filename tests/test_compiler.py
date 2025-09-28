@@ -61,3 +61,26 @@ def test_parse_params_duplicate_names(style, type_map):
     lines = ["int32(x)", "int32(x)"]
     with pytest.raises(ValueError):
         _parse_params(lines, type_map, style)
+
+
+def test_compile_to_nasm_param_register_skips_nil():
+    funcs = parse_functions(
+        """
+@init
+function "nil_first" {
+    @space 0B
+    @time 1ns
+    consume {
+        nil
+        int32(x)
+    }
+    emit {
+        nil
+    }
+    return x;
+}
+"""
+    )
+    asm = compile_to_nasm(funcs)
+    nil_first_block = asm.split("nil_first:", 1)[1]
+    assert "mov rax, rdi" in nil_first_block
