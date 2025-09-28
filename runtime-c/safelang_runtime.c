@@ -10,12 +10,14 @@ static void check_bits(int bits) {
 void sl_bounds(int bits, bool signed_arith, int64_t *min_out, int64_t *max_out) {
     check_bits(bits);
     if (signed_arith) {
-        int64_t max_val = ((int64_t)1 << (bits - 1)) - 1;
-        int64_t min_val = -((int64_t)1 << (bits - 1));
+        uint64_t magnitude = UINT64_C(1) << (bits - 1);
+        int64_t max_val = (int64_t)(magnitude - 1);
+        int64_t min_val = -(int64_t)magnitude;
         if (min_out) *min_out = min_val;
         if (max_out) *max_out = max_val;
     } else {
-        int64_t max_val = ((int64_t)1 << bits) - 1;
+        uint64_t magnitude = UINT64_C(1) << bits;
+        int64_t max_val = (int64_t)(magnitude - 1);
         int64_t min_val = 0;
         if (min_out) *min_out = min_val;
         if (max_out) *max_out = max_val;
