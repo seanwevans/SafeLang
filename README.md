@@ -1,4 +1,5 @@
 # SafeLang
+<img width="256" alt="what? you don't use the back of your clipboard?" src="https://github.com/user-attachments/assets/34594266-6058-4662-84d4-bc13be6f0243" />
 
 ![Coverage](coverage.svg)
 [![CI](https://github.com/seanwevans/SafeLang/actions/workflows/ci.yml/badge.svg)](https://github.com/seanwevans/SafeLang/actions/workflows/ci.yml)
