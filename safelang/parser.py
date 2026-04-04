@@ -179,10 +179,13 @@ def parse_functions(text: str) -> List[FunctionDef]:
             body = text[next_open + 1 : end_pos]
             line_count = body.count("\n") + 1 if body else 0
 
-            space_match = re.search(r"@space\s+(\S+)", body)
-            time_match = re.search(r"@time\s+(\S+)", body)
-
             body_sanitized = sanitized[next_open + 1 : end_pos]
+
+            space_match = re.search(r"@space\s+(\S+)", body_sanitized)
+            time_match = re.search(r"@time\s+(\S+)", body_sanitized)
+
+            space_value = body[space_match.start(1) : space_match.end(1)] if space_match else ""
+            time_value = body[time_match.start(1) : time_match.end(1)] if time_match else ""
 
             def extract_contract(keyword: str) -> List[str]:
                 match = re.search(rf"\b{keyword}\b", body_sanitized)
@@ -222,8 +225,8 @@ def parse_functions(text: str) -> List[FunctionDef]:
             funcs.append(
                 FunctionDef(
                     name=name,
-                    space=space_match.group(1) if space_match else "",
-                    time=time_match.group(1) if time_match else "",
+                    space=space_value,
+                    time=time_value,
                     body=body,
                     consume=consume_entries,
                     emit=emit_entries,
