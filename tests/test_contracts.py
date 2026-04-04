@@ -126,6 +126,32 @@ def test_space_missing_unit():
     assert errors == ["Function foo invalid @space value"]
 
 
+def test_space_in_comment_does_not_count():
+    src = (
+        'function "foo" {\n'
+        "// @space 1B\n"
+        "@time 1ns\n"
+        "consume { nil }\n"
+        "emit { nil }\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert errors == ["Function foo missing @space"]
+
+
+def test_time_in_string_does_not_count():
+    src = (
+        'function "foo" {\n'
+        '@space 1B\n'
+        'note = "@time 1ns"\n'
+        "consume { nil }\n"
+        "emit { nil }\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert errors == ["Function foo missing @time"]
+
+
 def test_time_missing_unit():
     src = 'function "foo" {\n@space 1B\n@time 10\nconsume { nil }\nemit { nil }\n}'
     errors = _verify(src)
