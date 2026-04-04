@@ -62,6 +62,28 @@ def _parse_params(lines: List[str], type_map: dict, style: str) -> List[str]:
     return params
 
 
+def _parse_typed_entries(lines: List[str], type_map: dict) -> List[tuple[str, str]]:
+    """Parse ``consume``/``emit`` entries into ``(mapped_type, name)`` tuples."""
+    entries: List[tuple[str, str]] = []
+    seen = set()
+    for ln in lines:
+        stripped = ln.split("#", 1)[0].split("!", 1)[0].strip()
+        if stripped == "nil":
+            continue
+        match = _PARAM_RE.fullmatch(stripped)
+        if not match:
+            raise ValueError(f"Malformed parameter: {ln}")
+        typ, name = match.group(1), match.group(2)
+        if name in seen:
+            raise ValueError(f"Duplicate parameter name: {name}")
+        mapped = type_map.get(typ)
+        if mapped is None:
+            raise ValueError(f"Unknown type: {typ}")
+        entries.append((mapped, name))
+        seen.add(name)
+    return entries
+
+
 def _parse_space(space: str) -> int:
     """Parse a memory size string into bytes.
 
@@ -227,13 +249,31 @@ def generate_c(funcs: List[FunctionDef]) -> str:
     for fn in funcs:
         try:
             params = _parse_params(fn.consume, _C_TYPE_MAP, "c")
+            emit_entries = _parse_typed_entries(fn.emit, _C_TYPE_MAP)
         except ValueError as exc:
             raise ValueError(f"{fn.name}: {exc}") from exc
         param_list = ", ".join(params) if params else "void"
+        return_type = "void"
+        if len(emit_entries) == 1:
+            return_type = emit_entries[0][0]
+        elif len(emit_entries) > 1:
+            struct_name = f"{fn.name}_emit_t"
+            lines.append(f"typedef struct {struct_name} {{")
+            for emit_type, emit_name in emit_entries:
+                lines.append(f"    {emit_type} {emit_name};")
+            lines.append(f"}} {struct_name};")
+            lines.append("")
+            return_type = struct_name
+
         lines.append(f"/* {fn.name}: @space {fn.space} @time {fn.time} */")
-        lines.append(f"void {fn.name}({param_list}) {{")
+        lines.append(f"{return_type} {fn.name}({param_list}) {{")
         for b in _extract_body(fn.body):
             lines.append(f"    {b}")
+        if len(emit_entries) == 1:
+            lines.append(f"    return {emit_entries[0][1]};")
+        elif len(emit_entries) > 1:
+            return_values = ", ".join(f".{name} = {name}" for _, name in emit_entries)
+            lines.append(f"    return ({return_type}){{{return_values}}};")
         lines.append("}")
 
         lines.append("")
@@ -246,12 +286,24 @@ def generate_rust(funcs: List[FunctionDef]) -> str:
     for fn in funcs:
         try:
             params = _parse_params(fn.consume, _RUST_TYPE_MAP, "rust")
+            emit_entries = _parse_typed_entries(fn.emit, _RUST_TYPE_MAP)
         except ValueError as exc:
             raise ValueError(f"{fn.name}: {exc}") from exc
+        return_sig = ""
+        if len(emit_entries) == 1:
+            return_sig = f" -> {emit_entries[0][0]}"
+        elif len(emit_entries) > 1:
+            tuple_types = ", ".join(emit_type for emit_type, _ in emit_entries)
+            return_sig = f" -> ({tuple_types})"
         lines.append(f"// {fn.name}: @space {fn.space} @time {fn.time}")
-        lines.append(f"pub fn {fn.name}({', '.join(params)}) {{")
+        lines.append(f"pub fn {fn.name}({', '.join(params)}){return_sig} {{")
         for b in _extract_body(fn.body):
             lines.append(f"    {b}")
+        if len(emit_entries) == 1:
+            lines.append(f"    {emit_entries[0][1]}")
+        elif len(emit_entries) > 1:
+            tuple_values = ", ".join(name for _, name in emit_entries)
+            lines.append(f"    ({tuple_values})")
         lines.append("}")
         lines.append("")
     return "\n".join(lines)
