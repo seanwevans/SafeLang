@@ -169,7 +169,9 @@ def _compile_expr(expr: str, var_regs: dict, fn_name: str, stmt: str) -> List[st
                 f"{fn_name}: unsupported operator {op!r} in statement {stmt!r}"
             )
         return code
-    raise ValueError(f"{fn_name}: unsupported expression {expr!r} in statement {stmt!r}")
+    raise ValueError(
+        f"{fn_name}: unsupported expression {expr!r} in statement {stmt!r}"
+    )
 
 
 def _compile_stmt(stmt: str, var_regs: dict, fn_name: str) -> List[str]:

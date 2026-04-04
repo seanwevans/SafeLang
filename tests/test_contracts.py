@@ -142,7 +142,7 @@ def test_space_in_comment_does_not_count():
 def test_time_in_string_does_not_count():
     src = (
         'function "foo" {\n'
-        '@space 1B\n'
+        "@space 1B\n"
         'note = "@time 1ns"\n'
         "consume { nil }\n"
         "emit { nil }\n"

@@ -197,8 +197,12 @@ def parse_functions(text: str) -> List[FunctionDef]:
             space_match = re.search(r"@space\s+(\S+)", body_sanitized)
             time_match = re.search(r"@time\s+(\S+)", body_sanitized)
 
-            space_value = body[space_match.start(1) : space_match.end(1)] if space_match else ""
-            time_value = body[time_match.start(1) : time_match.end(1)] if time_match else ""
+            space_value = (
+                body[space_match.start(1) : space_match.end(1)] if space_match else ""
+            )
+            time_value = (
+                body[time_match.start(1) : time_match.end(1)] if time_match else ""
+            )
 
             def extract_contract(keyword: str) -> List[str]:
                 match = re.search(rf"\b{keyword}\b", body_sanitized)

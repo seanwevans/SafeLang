@@ -63,7 +63,9 @@ def test_cli_emit_c():
     assert result.returncode == 0
     assert "#include <stdint.h>" in result.stdout
     assert "typedef struct clamp_params_emit_t {" in result.stdout
-    assert "clamp_params_emit_t clamp_params(float x, float y, float z)" in result.stdout
+    assert (
+        "clamp_params_emit_t clamp_params(float x, float y, float z)" in result.stdout
+    )
 
 
 def test_cli_emit_rust():
@@ -74,7 +76,10 @@ def test_cli_emit_rust():
         text=True,
     )
     assert result.returncode == 0
-    assert "pub fn clamp_params(x: f32, y: f32, z: f32) -> (f32, f32, f32)" in result.stdout
+    assert (
+        "pub fn clamp_params(x: f32, y: f32, z: f32) -> (f32, f32, f32)"
+        in result.stdout
+    )
 
 
 def test_cli_c_out(tmp_path):
@@ -101,7 +106,10 @@ def test_cli_rust_out(tmp_path):
     )
     assert result.returncode == 0
     assert result.stdout == ""
-    assert "pub fn clamp_params(x: f32, y: f32, z: f32) -> (f32, f32, f32)" in out_file.read_text()
+    assert (
+        "pub fn clamp_params(x: f32, y: f32, z: f32) -> (f32, f32, f32)"
+        in out_file.read_text()
+    )
 
 
 def test_cli_emit_c_malformed(tmp_path):
