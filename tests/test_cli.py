@@ -132,13 +132,66 @@ def test_cli_emit_c_malformed(tmp_path):
 
 
 def test_cli_emit_nasm(tmp_path):
-    src = Path(__file__).resolve().parents[1] / "example.slang"
+    src = (
+        "@init\n"
+        'function "init" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume { nil }\n"
+        "    emit { nil }\n"
+        "    return 0\n"
+        "}\n"
+        'function "add" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume {\n"
+        "        int64(a)\n"
+        "        int64(b)\n"
+        "    }\n"
+        "    emit { int64(r) }\n"
+        "    return a + b\n"
+        "}\n"
+    )
+    src_file = tmp_path / "ok.slang"
+    src_file.write_text(src)
     out_file = tmp_path / "out.asm"
     result = subprocess.run(
-        [sys.executable, "-m", "safelang", "--nasm", str(out_file), str(src)]
+        [sys.executable, "-m", "safelang", "--nasm", str(out_file), str(src_file)]
     )
     assert result.returncode == 0
     assert out_file.read_text().startswith("; Auto-generated NASM")
+
+
+def test_cli_emit_nasm_unsupported_input(tmp_path):
+    src = (
+        "@init\n"
+        'function "init" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume { nil }\n"
+        "    emit { nil }\n"
+        "    return 0\n"
+        "}\n"
+        'function "badnasm" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume { int64(a) }\n"
+        "    emit { int64(r) }\n"
+        "    a = a + 1\n"
+        "}\n"
+    )
+    src_file = tmp_path / "badnasm.slang"
+    out_file = tmp_path / "out.asm"
+    src_file.write_text(src)
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--nasm", str(out_file), str(src_file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "ERROR:" in result.stderr
+    assert "badnasm: unsupported statement" in result.stderr
+    assert not out_file.exists()
 
 
 def test_cli_emit_conflict():

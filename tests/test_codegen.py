@@ -213,6 +213,43 @@ function "many" {
         compile_to_nasm(funcs)
 
 
+def test_compile_to_nasm_unsupported_statement_raises():
+    src = """
+function "oops" {
+    @space 0B
+    @time 0ns
+
+    consume { int64(a) }
+    emit { int64(r) }
+
+    a = a + 1
+}
+"""
+    funcs = parse_functions(src)
+    with pytest.raises(ValueError, match=r"oops: unsupported statement 'a = a \+ 1'"):
+        compile_to_nasm(funcs)
+
+
+def test_compile_to_nasm_unsupported_expr_raises():
+    src = """
+function "oops_expr" {
+    @space 0B
+    @time 0ns
+
+    consume { int64(a) }
+    emit { int64(r) }
+
+    return a + b + c
+}
+"""
+    funcs = parse_functions(src)
+    with pytest.raises(
+        ValueError,
+        match=r"oops_expr: unsupported expression 'a \+ b \+ c' in statement 'return a \+ b \+ c'",
+    ):
+        compile_to_nasm(funcs)
+
+
 def test_generate_c_unknown_type_raises():
     funcs = _load_bad_funcs()
     with pytest.raises(ValueError, match="Unknown type: foo"):
