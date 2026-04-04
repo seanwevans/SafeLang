@@ -1,5 +1,6 @@
 #include "safelang_runtime.h"
 #include <stdlib.h> /* for abort */
+#include <limits.h>
 
 static void check_bits(int bits) {
     if (bits <= 0 || bits > 63) {
@@ -91,27 +92,38 @@ sl_result_t sl_sat_mul(int64_t a, int64_t b, int bits, bool signed_arith) {
 }
 
 sl_result_t sl_sat_div(int64_t a, int64_t b, int bits, bool signed_arith) {
+    int64_t min_v, max_v;
+    sl_bounds(bits, signed_arith, &min_v, &max_v);
     if (!signed_arith && (a < 0 || b < 0)) {
         abort();
     }
     if (b == 0) {
         abort();
     }
-    int64_t total = a / b;
-    int64_t min_v, max_v;
-    sl_bounds(bits, signed_arith, &min_v, &max_v);
-    return clamp_internal(total, min_v, max_v);
+    if (signed_arith && a == INT64_MIN && b == -1) {
+        return clamp_internal(INT64_MAX, min_v, max_v);
+    }
+    __int128 wide_a = (__int128)a;
+    __int128 wide_b = (__int128)b;
+    __int128 total = wide_a / wide_b;
+    return clamp_from_wide(total, min_v, max_v);
 }
 
 sl_result_t sl_sat_mod(int64_t a, int64_t b, int bits, bool signed_arith) {
+    int64_t min_v, max_v;
+    sl_bounds(bits, signed_arith, &min_v, &max_v);
     if (!signed_arith && (a < 0 || b < 0)) {
         abort();
     }
     if (b == 0) {
         abort();
     }
-    int64_t total = a % b;
-    int64_t min_v, max_v;
-    sl_bounds(bits, signed_arith, &min_v, &max_v);
-    return clamp_internal(total, min_v, max_v);
+    if (signed_arith && a == INT64_MIN && b == -1) {
+        return clamp_internal(0, min_v, max_v);
+    }
+    __int128 wide_a = (__int128)a;
+    __int128 wide_b = (__int128)b;
+    __int128 quotient = wide_a / wide_b;
+    __int128 total = wide_a - (quotient * wide_b);
+    return clamp_from_wide(total, min_v, max_v);
 }
