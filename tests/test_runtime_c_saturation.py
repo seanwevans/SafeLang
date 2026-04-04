@@ -28,3 +28,8 @@ def compile_and_run(tmp_path):
 def test_unsigned_extreme_saturates(tmp_path):
     returncode = compile_and_run(tmp_path)
     assert returncode == 0
+
+
+def test_signed_int64_min_divmod_boundary(tmp_path):
+    returncode = compile_and_run(tmp_path)
+    assert returncode == 0

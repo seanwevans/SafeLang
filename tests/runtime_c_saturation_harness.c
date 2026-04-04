@@ -1,5 +1,6 @@
 #include "safelang_runtime.h"
 
+#include <limits.h>
 #include <stdint.h>
 
 int main(void) {
@@ -16,6 +17,19 @@ int main(void) {
     sl_result_t mul_res = sl_sat_mul(big, other, bits, false);
     if (mul_res.value != max63 || !mul_res.saturated) {
         return 2;
+    }
+
+    const int signed_bits = 8;
+    const int64_t signed_max = 127;
+
+    sl_result_t div_res = sl_sat_div(INT64_MIN, -1, signed_bits, true);
+    if (div_res.value != signed_max || !div_res.saturated) {
+        return 3;
+    }
+
+    sl_result_t mod_res = sl_sat_mod(INT64_MIN, -1, signed_bits, true);
+    if (mod_res.value != 0 || mod_res.saturated) {
+        return 4;
     }
 
     return 0;
