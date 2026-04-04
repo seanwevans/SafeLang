@@ -56,10 +56,85 @@ function "noop" {
     assert "void noop(void)" in c_code
 
 
+def test_generate_c_single_emit_typed_return():
+    src = """
+function "identity" {
+    @space 0B
+    @time 0ns
+
+    consume { int32(x) }
+
+    emit { int32(x) }
+}
+"""
+    funcs = parse_functions(src)
+    c_code = generate_c(funcs)
+    assert "int32_t identity(int32_t x)" in c_code
+    assert "return x;" in c_code
+
+
+def test_generate_c_multi_emit_struct_return():
+    src = """
+function "pair" {
+    @space 0B
+    @time 0ns
+
+    consume { nil }
+
+    emit {
+        int32(left)
+        int32(right)
+    }
+}
+"""
+    funcs = parse_functions(src)
+    c_code = generate_c(funcs)
+    assert "typedef struct pair_emit_t {" in c_code
+    assert "pair_emit_t pair(void)" in c_code
+    assert "return (pair_emit_t){.left = left, .right = right};" in c_code
+
+
 def test_generate_rust_contains_clamp_params():
     funcs = _load_example_funcs()
     rust_code = generate_rust(funcs)
     assert "pub fn clamp_params" in rust_code
+
+
+def test_generate_rust_single_emit_typed_return():
+    src = """
+function "identity" {
+    @space 0B
+    @time 0ns
+
+    consume { int32(x) }
+
+    emit { int32(x) }
+}
+"""
+    funcs = parse_functions(src)
+    rust_code = generate_rust(funcs)
+    assert "pub fn identity(x: i32) -> i32" in rust_code
+    assert "\n    x\n" in rust_code
+
+
+def test_generate_rust_multi_emit_tuple_return():
+    src = """
+function "pair" {
+    @space 0B
+    @time 0ns
+
+    consume { nil }
+
+    emit {
+        int32(left)
+        int32(right)
+    }
+}
+"""
+    funcs = parse_functions(src)
+    rust_code = generate_rust(funcs)
+    assert "pub fn pair() -> (i32, i32)" in rust_code
+    assert "\n    (left, right)\n" in rust_code
 
 
 def test_generate_c_omits_annotations():
@@ -146,6 +221,34 @@ def test_generate_c_unknown_type_raises():
 
 def test_generate_rust_unknown_type_raises():
     funcs = _load_bad_funcs()
+    with pytest.raises(ValueError, match="Unknown type: foo"):
+        generate_rust(funcs)
+
+
+def test_generate_c_unknown_emit_type_raises():
+    src = """
+function "bad_emit" {
+    @space 0B
+    @time 0ns
+    consume { nil }
+    emit { foo(x) }
+}
+"""
+    funcs = parse_functions(src)
+    with pytest.raises(ValueError, match="Unknown type: foo"):
+        generate_c(funcs)
+
+
+def test_generate_rust_unknown_emit_type_raises():
+    src = """
+function "bad_emit" {
+    @space 0B
+    @time 0ns
+    consume { nil }
+    emit { foo(x) }
+}
+"""
+    funcs = parse_functions(src)
     with pytest.raises(ValueError, match="Unknown type: foo"):
         generate_rust(funcs)
 
