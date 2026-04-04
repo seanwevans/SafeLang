@@ -6,6 +6,19 @@ from dataclasses import dataclass, field
 from typing import List
 
 _PARAM_RE = re.compile(r"(\w+)\(([^)]+)\)")
+_DOMAIN_VALUE_RE = re.compile(
+    r"""
+    [+-]?(?:inf|pi|e)|
+    [+-]?(?:\d+(?:_\d+)*(?:\.\d+(?:_\d+)*)?|\.\d+(?:_\d+)*)|
+    [+-]?\d+(?:_\d+)*/\d+(?:_\d+)*|
+    [A-Za-z_]\w*
+    """,
+    re.VERBOSE,
+)
+_DOMAIN_RE = re.compile(
+    rf"^\s*([\[(])\s*({_DOMAIN_VALUE_RE.pattern})\s*,\s*({_DOMAIN_VALUE_RE.pattern})\s*([\])])\s*$",
+    re.VERBOSE,
+)
 
 
 @dataclass
@@ -312,23 +325,43 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
             errors.append(f"Function {fn.name} missing consume block")
         else:
             for entry in fn.consume:
-                stripped = entry.split("#", 1)[0].split("!", 1)[0].strip()
-                if stripped == "nil":
+                signature, domain_expr = _split_contract_entry(entry)
+                if signature == "nil":
                     continue
-                if not _PARAM_RE.fullmatch(stripped):
+                if not _PARAM_RE.fullmatch(signature):
                     errors.append(
                         f"Function {fn.name} malformed consume entry: {entry.strip()}"
+                    )
+                    continue
+                if domain_expr is None:
+                    errors.append(
+                        f"Function {fn.name} consume entry missing domain: {entry.strip()}"
+                    )
+                    continue
+                if not _is_valid_domain_expr(domain_expr):
+                    errors.append(
+                        f"Function {fn.name} invalid consume domain in entry: {entry.strip()}"
                     )
         if not fn.emit:
             errors.append(f"Function {fn.name} missing emit block")
         else:
             for entry in fn.emit:
-                stripped = entry.split("#", 1)[0].split("!", 1)[0].strip()
-                if stripped == "nil":
+                signature, domain_expr = _split_contract_entry(entry)
+                if signature == "nil":
                     continue
-                if not _PARAM_RE.fullmatch(stripped):
+                if not _PARAM_RE.fullmatch(signature):
                     errors.append(
                         f"Function {fn.name} malformed emit entry: {entry.strip()}"
+                    )
+                    continue
+                if domain_expr is None:
+                    errors.append(
+                        f"Function {fn.name} emit entry missing domain: {entry.strip()}"
+                    )
+                    continue
+                if not _is_valid_domain_expr(domain_expr):
+                    errors.append(
+                        f"Function {fn.name} invalid emit domain in entry: {entry.strip()}"
                     )
         if fn.lines > 128:
             errors.append(f"Function {fn.name} exceeds 128 line limit")
@@ -339,6 +372,27 @@ def verify_contracts(funcs: List[FunctionDef]) -> List[str]:
         errors.append("Multiple @init functions defined")
 
     return errors
+
+
+def _split_contract_entry(entry: str) -> tuple[str, str | None]:
+    """Split a contract line into a signature and optional domain fragment."""
+
+    signature_fragment, domain_fragment = entry, None
+    if "#" in entry:
+        signature_fragment, domain_fragment = entry.split("#", 1)
+
+    signature = signature_fragment.split("!", 1)[0].strip()
+    if domain_fragment is None:
+        return signature, None
+
+    domain = domain_fragment.split("!", 1)[0].strip()
+    return signature, domain or None
+
+
+def _is_valid_domain_expr(domain_expr: str) -> bool:
+    """Validate SafeLang domain interval fragments."""
+
+    return bool(_DOMAIN_RE.fullmatch(domain_expr))
 
 
 __all__ = ["FunctionDef", "parse_functions", "verify_contracts"]

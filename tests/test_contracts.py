@@ -214,3 +214,79 @@ def test_malformed_emit_entry():
     )
     errors = _verify(src)
     assert "Function foo malformed emit entry: int64 x" in errors
+
+
+def test_consume_entry_missing_domain():
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume { f32(x) }\n"
+        "emit { nil }\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert "Function foo consume entry missing domain: f32(x)" in errors
+
+
+def test_emit_entry_missing_domain():
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume { nil }\n"
+        "emit { f32(y) }\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert "Function foo emit entry missing domain: f32(y)" in errors
+
+
+def test_invalid_consume_domain():
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume {\n"
+        "  f32(x) # invalid\n"
+        "}\n"
+        "emit { nil }\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert "Function foo invalid consume domain in entry: f32(x) # invalid" in errors
+
+
+def test_invalid_emit_domain():
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume { nil }\n"
+        "emit {\n"
+        "  f32(y) # [0 1]\n"
+        "}\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert "Function foo invalid emit domain in entry: f32(y) # [0 1]" in errors
+
+
+def test_valid_domain_forms():
+    src = (
+        'function "foo" {\n'
+        "@space 1B\n"
+        "@time 1ns\n"
+        "consume {\n"
+        "  f32(x) # [0, 3/2]\n"
+        "  f32(y) # [-3, 4.29382)\n"
+        "  f32(z) # [-inf, pi]\n"
+        "}\n"
+        "emit {\n"
+        "  f32(x) # [0, 1]\n"
+        "  f32(y) # (-1.5, e]\n"
+        "}\n"
+        "}"
+    )
+    errors = _verify(src)
+    assert errors == []
