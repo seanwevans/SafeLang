@@ -120,7 +120,7 @@ def _tokenize(expr: str) -> List[str]:
     return _TOKEN_RE.findall(expr)
 
 
-def _compile_expr(expr: str, var_regs: dict) -> List[str]:
+def _compile_expr(expr: str, var_regs: dict, fn_name: str, stmt: str) -> List[str]:
     tokens = _tokenize(expr)
     if not tokens:
         return []
@@ -143,17 +143,19 @@ def _compile_expr(expr: str, var_regs: dict) -> List[str]:
             code.append("cqo")
             code.append(f"idiv {rhs_val}")
         else:
-            code.append(f"; unsupported op {op}")
+            raise ValueError(
+                f"{fn_name}: unsupported operator {op!r} in statement {stmt!r}"
+            )
         return code
-    return [f"; unsupported expr {expr}"]
+    raise ValueError(f"{fn_name}: unsupported expression {expr!r} in statement {stmt!r}")
 
 
-def _compile_stmt(stmt: str, var_regs: dict) -> List[str]:
-    stmt = stmt.strip().rstrip(";")
-    if stmt.startswith("return"):
-        expr = stmt[len("return") :].strip()
-        return _compile_expr(expr, var_regs)
-    return [f"; unsupported: {stmt}"]
+def _compile_stmt(stmt: str, var_regs: dict, fn_name: str) -> List[str]:
+    normalized_stmt = stmt.strip().rstrip(";")
+    if normalized_stmt.startswith("return"):
+        expr = normalized_stmt[len("return") :].strip()
+        return _compile_expr(expr, var_regs, fn_name, normalized_stmt)
+    raise ValueError(f"{fn_name}: unsupported statement {normalized_stmt!r}")
 
 
 def _extract_body(body: str) -> List[str]:
@@ -210,7 +212,7 @@ def compile_to_nasm(funcs: List[FunctionDef]) -> str:
             param_idx += 1
 
         for stmt in _extract_body(fn.body):
-            for ins in _compile_stmt(stmt, var_regs):
+            for ins in _compile_stmt(stmt, var_regs, fn.name):
                 lines.append(f"    {ins}")
 
         if space:

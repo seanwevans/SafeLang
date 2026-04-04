@@ -44,14 +44,14 @@ def main() -> int:
             print(f"ERROR: {e}")
         return 1
 
-    if args.nasm:
-        asm = compile_to_nasm(funcs)
-        try:
-            args.nasm.write_text(asm)
-        except OSError as exc:
-            print(f"ERROR: {exc}", file=sys.stderr)
-            return 1
     try:
+        if args.nasm:
+            asm = compile_to_nasm(funcs)
+            try:
+                args.nasm.write_text(asm)
+            except OSError as exc:
+                print(f"ERROR: {exc}", file=sys.stderr)
+                return 1
         if args.emit_c or args.c_out:
             code = generate_c(funcs)
             if args.c_out:
