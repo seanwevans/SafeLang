@@ -142,7 +142,11 @@ def _tokenize(expr: str) -> List[str]:
     return _TOKEN_RE.findall(expr)
 
 
-def _compile_expr(expr: str, var_regs: dict, fn_name: str, stmt: str) -> List[str]:
+def _compile_expr(
+    expr: str, var_regs: dict, fn_name: str = "", stmt: str | None = None
+) -> List[str]:
+    if stmt is None:
+        stmt = expr
     tokens = _tokenize(expr)
     if not tokens:
         return []
