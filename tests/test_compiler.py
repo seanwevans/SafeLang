@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from safelang import parse_functions, compile_to_nasm
@@ -13,8 +11,28 @@ from safelang.compiler import (
 
 
 def test_compile_to_nasm(tmp_path):
-    src = Path(__file__).resolve().parents[1] / "example.slang"
-    funcs = parse_functions(src.read_text())
+    src = (
+        "@init\n"
+        'function "clamp_params_init" {\n'
+        "    @space 512B\n"
+        "    @time 10_000ns\n"
+        "    consume { nil }\n"
+        "    emit { nil }\n"
+        "    return 0\n"
+        "}\n"
+        'function "clamp_params" {\n'
+        "    @space 128B\n"
+        "    @time 1000ns\n"
+        "    consume {\n"
+        "        int64(x) # [0, 1]\n"
+        "    }\n"
+        "    emit {\n"
+        "        int64(r) # [0, 1]\n"
+        "    }\n"
+        "    return x\n"
+        "}\n"
+    )
+    funcs = parse_functions(src)
     asm = compile_to_nasm(funcs)
     assert "clamp_params_init:" in asm
     init_block = asm.split("clamp_params_init:")[1].split("clamp_params:")[0]
