@@ -24,4 +24,5 @@ repos:
           - coverage
           - pytest
           - coverage-badge
+          - setuptools
         pass_filenames: false
