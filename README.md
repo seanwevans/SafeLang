@@ -175,24 +175,3 @@ python -m pip install pytest
 pytest
 ```
 
-## Pre-commit Hooks
-
-Install `pre-commit` to run formatting and lint checks before committing:
-
-```bash
-python -m pip install pre-commit
-pre-commit run --files <changed files>
-```
-
-These hooks enforce **Black** formatting and **Pylint** linting.
-
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-For information on the compiler internals and verification agents, see [AGENTS.md](AGENTS.md).
-
-
