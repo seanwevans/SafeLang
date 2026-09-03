@@ -36,6 +36,10 @@ The SafeLang compiler is not your assistant. It is your adversary. It attempts t
   * Declare explicit **time** and **space** budgets using `@time` and `@space`
   * Specify input and output domains via `consume` and `emit` blocks
 
+Both budgets are enforced, not decorative. `@space` becomes the stack
+reservation in the generated NASM, and `@time` is checked against a static
+worst-case execution time estimate — see [Time budgets](#time-budgets).
+
 ```c
 function "adjust_thrust" {
     @space 16B
@@ -105,6 +109,60 @@ int32 sat_add(int32 a, int32 b)
 * Compiler attempts adversarial simulation of symbolic execution paths
 * Compilation only succeeds if the compiler **fails to falsify** the program under any circumstances
 
+## Time budgets
+
+Every function declares a `@time` budget, and the compiler checks it. It walks
+the body, adds up a cycle cost for every operation, converts the total to
+nanoseconds against a target clock, and rejects any function whose worst case
+does not fit:
+
+```bash
+$ safelang --time-report example.slang
+OK: clamp_params_init: 2 cycles = 20ns against a 10000ns budget
+OK: clamp_params: 34 cycles = 340ns against a 1000ns budget
+```
+
+The check runs by default. `--clock-mhz` sets the target clock (100 MHz by
+default, which makes one cycle exactly 10ns), and `--no-time-check` skips the
+analysis.
+
+### The cost model
+
+The model approximates a simple in-order core with no cache, no pipeline
+overlap and no speculation — the machine a hard-real-time budget is usually
+written against:
+
+| Operation | Cycles |
+| --- | --- |
+| move / assignment | 1 |
+| add, subtract | 1 |
+| multiply | 3 |
+| divide, modulo | 20 |
+| comparison | 1 |
+| taken branch | 2 |
+| array index | 1 |
+| function call | 5 |
+| return | 1 |
+
+Control flow is costed conservatively. A `loop(i = a..b)` costs its full static
+trip count, an `if`/`else` costs its more expensive arm, and a `match` pays to
+test every arm and then take the priciest one.
+
+### What it refuses to do
+
+The estimator will not invent a number it cannot justify. A loop whose bounds
+are not compile-time constants has no worst case, and is reported as an error
+rather than being assigned a guess:
+
+```
+ERROR: Function scan has no bounded worst case: loop bound 'n' is not a
+compile-time constant; SafeLang loops must have statically provable bounds
+```
+
+The estimate is a static upper bound on a simplified machine, not a measurement.
+It catches a budget nobody could meet; it does not replace timing the code on
+real silicon.
+
 ## Runtime Behavior
 
 * Saturating arithmetic is deterministic and portable
@@ -148,7 +206,14 @@ Install the package to expose the ``safelang`` command line tool and run the ver
    safelang --nasm out.asm example.slang
    ```
 
-   If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, or exceeds the 128 line limit, the CLI prints `ERROR:` messages and exits with a non‑zero status.
+   To see the worst-case execution time estimate for each function, use
+   `--time-report`:
+
+   ```bash
+   safelang --time-report example.slang
+   ```
+
+   If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, exceeds the 128 line limit, or cannot meet its declared `@time` budget, the CLI prints `ERROR:` messages and exits with a non‑zero status.
 
 3. Alternatively, run the demonstration script which also showcases saturating arithmetic:
 

@@ -134,12 +134,39 @@ import "hardware"
 * Every function's time/space contract must be statically analyzable
 * Violations trigger compile-time rejection or runtime trap (if enabled)
 
+### Timing analysis
+
+A function's worst-case execution time is the sum of the cycle costs of the
+operations it performs, evaluated against a target clock (100 MHz by default):
+
+| Operation | Cycles |
+| --------- | ------ |
+| move / assignment | 1 |
+| add, subtract | 1 |
+| multiply | 3 |
+| divide, modulo | 20 |
+| comparison | 1 |
+| taken branch | 2 |
+| array index | 1 |
+| function call | 5 |
+| return | 1 |
+
+Control flow is costed for its worst case: a `loop(i = a..b)` contributes its
+full static trip count, an `if`/`else` contributes its more expensive arm, and a
+`match` tests every arm before taking the priciest one. A `memory` declaration
+reserves space at `@init` time and costs nothing at runtime.
+
+A construct with no statically provable worst case — most importantly a loop
+whose bounds are not compile-time constants — is a compile-time error. The
+analysis never substitutes an estimate for a bound it cannot prove.
+
 ---
 
 ## 📌 Attributes
 
-* `@time Nns`  — per-function time budget
-* `@space NB`  — total stack and local memory
+* `@time Nns`  — per-function time budget, checked against a static worst-case
+  execution time estimate (see *Timing analysis* above)
+* `@space NB`  — total stack and local memory, emitted as the stack reservation
 * `@init` — exactly one function marked with this attribute performs required setup-time allocation
 
 ---
