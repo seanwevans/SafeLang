@@ -52,3 +52,28 @@ jobs:
               git push origin HEAD:${{ github.ref_name }}
             fi
           fi
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install build tooling
+        run: python -m pip install --upgrade pip build twine
+      - name: Build sdist and wheel
+        run: python -m build
+      - name: Validate the distributions
+        run: python -m twine check --strict dist/*
+      - name: Check the wheel ships the JavaScript runtime
+        run: |
+          python - <<'PY'
+          import glob
+          import zipfile
+
+          wheel = glob.glob("dist/*.whl")[0]
+          names = zipfile.ZipFile(wheel).namelist()
+          assert "safelang/runtime.js" in names, names
+          print(f"{wheel} ships runtime.js")
+          PY

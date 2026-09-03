@@ -3,6 +3,7 @@
 import argparse
 from pathlib import Path
 import sys
+from . import __version__
 from .parser import parse_functions, verify_contracts
 from .compiler import compile_to_nasm, generate_c, generate_rust
 from .timing import DEFAULT_CLOCK_HZ, analyze, check_time_budgets
@@ -12,6 +13,11 @@ def main() -> int:
     """Parse CLI arguments and verify a SafeLang source file."""
     parser = argparse.ArgumentParser(description="SafeLang demo verifier")
     parser.add_argument("file", type=Path, help="Path to SafeLang source")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"safelang {__version__}",
+    )
     parser.add_argument("--nasm", type=Path, help="Write NASM output to file")
     parser.add_argument(
         "--clock-mhz",
