@@ -117,10 +117,20 @@ int32 sat_add(int32 a, int32 b)
 
 Install the package to expose the ``safelang`` command line tool and run the verifier.
 
-1. Install the project in editable mode:
+1. Install from PyPI:
 
    ```bash
-   python -m pip install -e .
+   pip install safelang-verifier
+   ```
+
+   The distribution is named `safelang-verifier` because the bare `safelang`
+   name on PyPI belongs to an unrelated placeholder package. The import package
+   and the command are both still `safelang`.
+
+   To work on SafeLang itself, install it from a checkout instead:
+
+   ```bash
+   python -m pip install -e '.[dev]'
    ```
 
 2. Execute the verifier on a SafeLang source file:
@@ -168,10 +178,14 @@ Install the package to expose the ``safelang`` command line tool and run the ver
 
 ## Running Tests
 
-Install pytest and execute the suite:
+Install the development extra and execute the suite:
 
 ```bash
-python -m pip install pytest
+python -m pip install -e '.[dev]'
 pytest
 ```
+
+## Releasing
+
+See [RELEASING.md](RELEASING.md).
 
