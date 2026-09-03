@@ -11,3 +11,7 @@ requires-python = ">=3.8"
 
 [project.scripts]
 safelang = "safelang.__main__:main"
+
+[project.optional-dependencies]
+# The adversarial falsification pass (`safelang --falsify`) needs an SMT solver.
+verify = ["z3-solver>=4.12"]

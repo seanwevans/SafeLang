@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 from .parser import parse_functions, verify_contracts
 from .compiler import compile_to_nasm, generate_c, generate_rust
+from .adversary import FalsificationUnavailable, VERIFIED, falsify, format_reports
 
 
 def main() -> int:
@@ -12,6 +13,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="SafeLang demo verifier")
     parser.add_argument("file", type=Path, help="Path to SafeLang source")
     parser.add_argument("--nasm", type=Path, help="Write NASM output to file")
+    parser.add_argument(
+        "--falsify",
+        action="store_true",
+        help=(
+            "Run the adversarial falsification pass over the consume/emit "
+            "domains (requires z3-solver)"
+        ),
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--emit-c",
@@ -43,6 +52,17 @@ def main() -> int:
         for e in errors:
             print(f"ERROR: {e}")
         return 1
+
+    if args.falsify:
+        try:
+            reports = falsify(funcs)
+        except FalsificationUnavailable as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 1
+        for line in format_reports(reports):
+            print(line)
+        if any(report.status != VERIFIED for report in reports):
+            return 1
 
     try:
         if args.nasm:
