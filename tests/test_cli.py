@@ -2,6 +2,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def test_cli_valid():
     file = Path(__file__).resolve().parents[1] / "example.slang"
@@ -224,3 +226,136 @@ def test_cli_emit_conflict():
     )
     assert result.returncode == 2
     assert "usage:" in result.stderr.lower()
+
+
+NASM_SRC = (
+    "@init\n"
+    'function "init" {\n'
+    "    @space 1B\n"
+    "    @time 1ns\n"
+    "    consume { nil }\n"
+    "    emit { nil }\n"
+    "    return 0\n"
+    "}\n"
+    'function "add" {\n'
+    "    @space 1B\n"
+    "    @time 1ns\n"
+    "    consume {\n"
+    "        int64(a) # [0, 100]\n"
+    "        int64(b) # [0, 100]\n"
+    "    }\n"
+    "    emit {\n"
+    "        int64(r) # [0, 200]\n"
+    "    }\n"
+    "    return a + b\n"
+    "}\n"
+)
+
+
+def test_cli_emit_nasm_to_stdout(tmp_path):
+    src_file = tmp_path / "ok.slang"
+    src_file.write_text(NASM_SRC)
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--emit-nasm", str(src_file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert result.stdout.startswith("; Auto-generated NASM")
+    assert "global add" in result.stdout
+
+
+def test_cli_nasm_out_writes_a_file(tmp_path):
+    src_file = tmp_path / "ok.slang"
+    src_file.write_text(NASM_SRC)
+    out_file = tmp_path / "out.asm"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--nasm-out", str(out_file), str(src_file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert result.stdout == ""
+    assert out_file.read_text().startswith("; Auto-generated NASM")
+
+
+def test_cli_nasm_alias_still_works_but_warns(tmp_path):
+    src_file = tmp_path / "ok.slang"
+    src_file.write_text(NASM_SRC)
+    out_file = tmp_path / "out.asm"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--nasm", str(out_file), str(src_file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "--nasm is deprecated" in result.stderr
+    assert out_file.read_text().startswith("; Auto-generated NASM")
+
+
+def test_cli_emit_nasm_unsupported_input_to_stdout(tmp_path):
+    src = (
+        "@init\n"
+        'function "init" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume { nil }\n"
+        "    emit { nil }\n"
+        "}\n"
+        'function "badnasm" {\n'
+        "    @space 1B\n"
+        "    @time 1ns\n"
+        "    consume {\n"
+        "        int64(a) # [0, 100]\n"
+        "    }\n"
+        "    emit {\n"
+        "        int64(r) # [0, 100]\n"
+        "    }\n"
+        "    a = a + 1\n"
+        "}\n"
+    )
+    src_file = tmp_path / "badnasm.slang"
+    src_file.write_text(src)
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--emit-nasm", str(src_file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "badnasm: unsupported statement" in result.stderr
+    assert result.stdout == ""
+
+
+def test_cli_nasm_out_unwritable_path(tmp_path):
+    src_file = tmp_path / "ok.slang"
+    src_file.write_text(NASM_SRC)
+    out_file = tmp_path / "missing-dir" / "out.asm"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", "--nasm-out", str(out_file), str(src_file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "ERROR" in result.stderr
+    assert not out_file.exists()
+
+
+@pytest.mark.parametrize(
+    "flags",
+    [
+        ("--emit-c", "--emit-nasm"),
+        ("--emit-nasm", "--emit-rust"),
+        ("--emit-nasm", "--nasm-out", "out.asm"),
+        ("--nasm", "out.asm", "--nasm-out", "out2.asm"),
+        ("--c-out", "out.c", "--emit-nasm"),
+    ],
+)
+def test_cli_output_flags_are_mutually_exclusive(flags):
+    file = Path(__file__).resolve().parents[1] / "example.slang"
+    result = subprocess.run(
+        [sys.executable, "-m", "safelang", *flags, str(file)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "not allowed with argument" in result.stderr
