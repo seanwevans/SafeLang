@@ -21,6 +21,8 @@ jobs:
           # coverage-badge imports pkg_resources, which setuptools>=81 removed.
           # Pin setuptools<81 so it stays importable (Python 3.12+ has no setuptools by default).
           pip install pytest pre-commit coverage coverage-badge 'setuptools<81'
+          # z3-solver powers the falsification pass and its tests.
+          pip install 'z3-solver>=4.12'
       - name: Run pre-commit
         run: |
           pre-commit run --files $(git ls-files '*.py') || true

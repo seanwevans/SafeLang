@@ -232,14 +232,14 @@ NASM_SRC = (
     "@init\n"
     'function "init" {\n'
     "    @space 1B\n"
-    "    @time 1ns\n"
+    "    @time 100ns\n"
     "    consume { nil }\n"
     "    emit { nil }\n"
     "    return 0\n"
     "}\n"
     'function "add" {\n'
     "    @space 1B\n"
-    "    @time 1ns\n"
+    "    @time 100ns\n"
     "    consume {\n"
     "        int64(a) # [0, 100]\n"
     "        int64(b) # [0, 100]\n"
@@ -298,13 +298,13 @@ def test_cli_emit_nasm_unsupported_input_to_stdout(tmp_path):
         "@init\n"
         'function "init" {\n'
         "    @space 1B\n"
-        "    @time 1ns\n"
+        "    @time 100ns\n"
         "    consume { nil }\n"
         "    emit { nil }\n"
         "}\n"
         'function "badnasm" {\n'
         "    @space 1B\n"
-        "    @time 1ns\n"
+        "    @time 100ns\n"
         "    consume {\n"
         "        int64(a) # [0, 100]\n"
         "    }\n"

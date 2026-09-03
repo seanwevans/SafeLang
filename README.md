@@ -10,7 +10,13 @@ SafeLang is a programming language designed for **hard real-time, safety-critica
 
 > "The program is assumed correct. The compiler's job is to prove that false."
 
-The SafeLang compiler is not your assistant. It is your adversary. It attempts to falsify the program by discovering any possible scenario—no matter how edge-case—that could cause failure, overflow, undefined behavior, or constraint violation. Code that compiles in SafeLang has *survived a hostile proof-of-safety*.
+The SafeLang compiler is not your assistant. It is your adversary. It attempts to falsify the program by searching for an input—no matter how edge-case—that violates a declared contract. Code that survives has *survived a hostile proof-of-safety*.
+
+That posture is implemented, not aspirational: `safelang --falsify` hands the
+`consume`/`emit` domains and the function body to the Z3 SMT solver and asks it
+for a counterexample. What the pass covers today, and where it stops, is spelled
+out under [Falsification](#falsification) — read that section before treating a
+clean run as a proof.
 
 ## Design Principles
 
@@ -106,8 +112,85 @@ int32 sat_add(int32 a, int32 b)
 * All errors are critical
 * All warnings are errors, which are critical
 * All info are warnings, which are errors, which are critical
-* Compiler attempts adversarial simulation of symbolic execution paths
-* Compilation only succeeds if the compiler **fails to falsify** the program under any circumstances
+* Under `--falsify`, the compiler symbolically executes each function body and
+  asks an SMT solver to break its `emit` contracts
+* Compilation succeeds only if the solver **fails to falsify** every obligation
+  it was able to model. A body containing a construct the solver cannot model is
+  reported `INCONCLUSIVE` and fails — the pass never reports a proof over code it
+  did not read.
+
+## Falsification
+
+`safelang --falsify FILE` runs the adversarial pass. For each function it treats
+every `consume` domain as an assumption and every `emit` domain as a proof
+obligation, symbolically executes the body, and asks
+[Z3](https://github.com/Z3Prover/z3) for a witness that breaks an obligation.
+
+Install the solver alongside the package:
+
+```bash
+pip install 'safelang-verifier[verify]'      # from PyPI
+python -m pip install -e '.[verify]'         # from a checkout
+```
+
+Each function comes back with one of three verdicts:
+
+| Verdict | Meaning |
+| --- | --- |
+| `OK` | The solver proved no input in the `consume` domains can break the `emit` domains. |
+| `FALSIFIED` | The solver produced a concrete counterexample, printed as a witness. |
+| `INCONCLUSIVE` | The body used a construct outside the modelled subset, so no verdict is claimed. |
+
+`FALSIFIED` and `INCONCLUSIVE` both exit non-zero.
+
+### A worked example
+
+The bundled `example.slang` does not survive. Its clamps guard only the tails:
+
+```c
+x < 0.1 ? cl_x = 0
+x > 1   ? cl_x = 1
+```
+
+Nothing assigns `cl_x` when `0.1 ≤ x ≤ 1`, and the solver says so:
+
+```bash
+$ safelang --falsify example.slang
+OK: clamp_params_init survived falsification (no emit domain obligations to falsify)
+FALSIFIED: clamp_params: cl_x: can leave the body unassigned [witness: x=0.1, y=0, z=0]
+```
+
+`example_verified.slang` closes the gap by assigning a default before the
+guards run, and survives:
+
+```bash
+$ safelang --falsify example_verified.slang
+OK: limits_init survived falsification (no emit domain obligations to falsify)
+OK: clamp_unit survived falsification
+OK: scale_half survived falsification
+```
+
+### What the pass checks
+
+* Every `emit` variable is assigned on **every** path through the body
+* Every `emit` variable stays inside its declared domain for **every** input
+  permitted by the `consume` domains
+* No division can be reached with a zero divisor
+
+### What the pass does not check — yet
+
+These are honest limits, not fine print. A clean run proves the three properties
+above and nothing else:
+
+* **Values are modelled as mathematical reals.** Floating-point rounding and
+  integer saturation are not modelled, so a domain proven here is proven for
+  exact arithmetic.
+* **Only three statement forms are understood:** `name = expr`,
+  `cond ? name = expr`, and `return expr`. Arrays, `memory` declarations,
+  `loop`, `if`/`else`, `match`, and calls make a function `INCONCLUSIVE`.
+* **Contracts are not composed across calls.** Each function is falsified in
+  isolation; a caller passing out-of-domain arguments is not yet detected.
+* **`@space` and `@time` budgets are not part of this pass.**
 
 ## Time budgets
 
@@ -223,7 +306,13 @@ Install the package to expose the ``safelang`` command line tool and run the ver
    ``--nasm PATH`` is still accepted as a deprecated alias for ``--nasm-out``
    and prints a warning.
 
-   If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, or exceeds the 128 line limit, the CLI prints `ERROR:` messages and exits with a non‑zero status.
+   To run the adversarial falsification pass, add ``--falsify`` (needs the
+   ``verify`` extra installed):
+
+   ```bash
+   safelang --falsify example_verified.slang
+   ```
+
    To see the worst-case execution time estimate for each function, use
    `--time-report`:
 

@@ -6,6 +6,13 @@ from .runtime import sat_add, sat_sub, sat_mul, sat_div, sat_mod
 from .parser import FunctionDef, parse_functions, verify_contracts
 
 from .compiler import compile_to_nasm, generate_c, generate_rust
+from .adversary import (
+    FalsificationUnavailable,
+    FunctionReport,
+    falsify,
+    format_reports,
+    z3_available,
+)
 from .timing import (
     CycleModel,
     TimingReport,
@@ -34,4 +41,9 @@ __all__ = [
     "check_time_budgets",
     "estimate_cycles",
     "estimate_ns",
+    "falsify",
+    "format_reports",
+    "z3_available",
+    "FalsificationUnavailable",
+    "FunctionReport",
 ]

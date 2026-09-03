@@ -50,6 +50,8 @@ Grammar = "https://github.com/seanwevans/SafeLang/blob/main/GRAMMAR.md"
 
 [project.optional-dependencies]
 dev = ["pytest", "coverage", "coverage-badge", "pre-commit", "black==24.4.2"]
+# The adversarial falsification pass (`safelang --falsify`) needs an SMT solver.
+verify = ["z3-solver>=4.12"]
 
 [project.scripts]
 safelang = "safelang.__main__:main"

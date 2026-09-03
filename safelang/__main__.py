@@ -7,6 +7,7 @@ from . import __version__
 from .parser import parse_functions, verify_contracts
 from .compiler import compile_to_nasm, generate_c, generate_rust
 from .timing import DEFAULT_CLOCK_HZ, analyze, check_time_budgets
+from .adversary import FalsificationUnavailable, VERIFIED, falsify, format_reports
 
 #: Every code generator the CLI can drive, keyed by the name used in its flags.
 #: Each backend gets the same pair of options: ``--emit-NAME`` writes to stdout
@@ -27,7 +28,6 @@ def _build_parser() -> argparse.ArgumentParser:
         action="version",
         version=f"safelang {__version__}",
     )
-    parser.add_argument("--nasm", type=Path, help="Write NASM output to file")
     parser.add_argument(
         "--clock-mhz",
         type=float,
@@ -43,6 +43,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--time-report",
         action="store_true",
         help="Print the WCET estimate for every function",
+    )
+    parser.add_argument(
+        "--falsify",
+        action="store_true",
+        help=(
+            "Run the adversarial falsification pass over the consume/emit "
+            "domains (requires z3-solver)"
+        ),
     )
     group = parser.add_mutually_exclusive_group()
     for name, (label, _generator) in _BACKENDS.items():
@@ -120,6 +128,17 @@ def main() -> int:
         for e in errors:
             print(f"ERROR: {e}")
         return 1
+
+    if args.falsify:
+        try:
+            reports = falsify(funcs)
+        except FalsificationUnavailable as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 1
+        for line in format_reports(reports):
+            print(line)
+        if any(report.status != VERIFIED for report in reports):
+            return 1
 
     generator, destination = _select_backend(args)
     if generator is None:
