@@ -1,0 +1,19 @@
+include LICENSE
+include README.md
+include SPEC.md
+include GRAMMAR.md
+include RELEASING.md
+include example.slang
+include demo.py
+
+# The C runtime is part of the deliverable: generated C links against it.
+recursive-include runtime-c *.c *.h *.md
+
+# Ship the tests so a downstream packager can run them; the C harnesses and
+# conftest are part of that, and without them the shipped suite cannot run.
+include tests/conftest.py
+recursive-include tests *.py *.c
+
+prune .github
+exclude .pre-commit-config.yaml
+exclude coverage.svg

@@ -25,7 +25,8 @@ Supported statements::
     cond ? name = expr          guarded assignment
     return expr                 bound to the single emit variable, if there is one
 
-Z3 is an optional dependency; install it with ``pip install safelang[verify]``.
+Z3 is an optional dependency; install it with
+``pip install 'safelang-verifier[verify]'``.
 """
 
 from __future__ import annotations
@@ -601,7 +602,8 @@ def falsify(funcs: Sequence[FunctionDef]) -> List[FunctionReport]:
 
     if z3 is None:
         raise FalsificationUnavailable(
-            "z3-solver is not installed; install it with: pip install 'safelang[verify]'"
+            "z3-solver is not installed; install it with: "
+            "pip install 'safelang-verifier[verify]'"
         )
     return [falsify_function(fn) for fn in funcs]
 

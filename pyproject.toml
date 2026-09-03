@@ -1,17 +1,68 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+# PEP 639 license expressions (`license = "MIT"`) need setuptools 77 or newer.
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "safelang"
-version = "0.1.0"
-description = "Demo SafeLang verifier and runtime"
+# The bare name `safelang` is already taken on PyPI by an unrelated placeholder
+# package, so the distribution is published as `safelang-verifier`. The import
+# package and the console script are both still `safelang`.
+name = "safelang-verifier"
+dynamic = ["version"]
+description = "Contract verifier, WCET checker and code generators for SafeLang, a language for hard real-time safety-critical embedded systems"
 readme = "README.md"
-requires-python = ">=3.8"
+# safelang/parser.py uses PEP 604 unions (`str | None`) in evaluated
+# annotations, so 3.10 is the real floor.
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "The SafeLang Authors" }]
+keywords = [
+    "safelang",
+    "compiler",
+    "verification",
+    "embedded",
+    "real-time",
+    "safety-critical",
+    "saturating-arithmetic",
+    "static-analysis",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Software Development :: Embedded Systems",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/seanwevans/SafeLang"
+Repository = "https://github.com/seanwevans/SafeLang"
+Issues = "https://github.com/seanwevans/SafeLang/issues"
+Specification = "https://github.com/seanwevans/SafeLang/blob/main/SPEC.md"
+Grammar = "https://github.com/seanwevans/SafeLang/blob/main/GRAMMAR.md"
+
+[project.optional-dependencies]
+dev = ["pytest", "coverage", "coverage-badge", "pre-commit", "black==24.4.2"]
+# The adversarial falsification pass (`safelang --falsify`) needs an SMT solver.
+verify = ["z3-solver>=4.12"]
 
 [project.scripts]
 safelang = "safelang.__main__:main"
 
-[project.optional-dependencies]
-# The adversarial falsification pass (`safelang --falsify`) needs an SMT solver.
-verify = ["z3-solver>=4.12"]
+[tool.setuptools]
+packages = ["safelang"]
+
+[tool.setuptools.dynamic]
+version = { attr = "safelang.__version__" }
+
+[tool.setuptools.package-data]
+# The JavaScript runtime ships alongside the Python one; without this it is
+# silently dropped from the wheel.
+safelang = ["runtime.js"]
