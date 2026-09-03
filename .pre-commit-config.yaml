@@ -25,4 +25,7 @@ repos:
           - pytest
           - coverage-badge
           - setuptools<81
+          # The falsification tests skip themselves without a solver, so the
+          # hook needs z3 to actually exercise safelang/adversary.py.
+          - z3-solver>=4.12
         pass_filenames: false
