@@ -197,25 +197,33 @@ Install the package to expose the ``safelang`` command line tool and run the ver
    safelang example.slang
    ```
 
-   To generate C code instead of just verifying, pass ``--emit-c``.
-   For Rust output, use ``--emit-rust``:
-
-   ```bash
-   safelang --emit-c example.slang
-   safelang --emit-rust example.slang
-   ```
-
    Example output:
 
    ```
    Parsed 2 functions successfully.
    ```
 
-   To generate NASM output, use `--nasm`:
+   Every backend has the same pair of options: ``--emit-NAME`` writes the
+   generated code to stdout, and ``--NAME-out PATH`` writes it to a file. The
+   options are mutually exclusive -- one run produces one output.
+
+   | Backend | To stdout | To a file |
+   | --- | --- | --- |
+   | C | `--emit-c` | `--c-out PATH` |
+   | Rust | `--emit-rust` | `--rust-out PATH` |
+   | NASM x86-64 | `--emit-nasm` | `--nasm-out PATH` |
+
    ```bash
-   safelang --nasm out.asm example.slang
+   safelang --emit-c example.slang
+   safelang --emit-rust example.slang
+   safelang --emit-nasm example.slang
+   safelang --nasm-out out.asm example.slang
    ```
 
+   ``--nasm PATH`` is still accepted as a deprecated alias for ``--nasm-out``
+   and prints a warning.
+
+   If a function is missing `@space`, `@time`, `consume`, or `emit` blocks, or exceeds the 128 line limit, the CLI prints `ERROR:` messages and exits with a non‑zero status.
    To see the worst-case execution time estimate for each function, use
    `--time-report`:
 
