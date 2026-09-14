@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SafeLang — Wall Time</title>
+<meta name="description" content="A hard real-time control unit running on wall time. SafeLang's guarantees, shown rather than described.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%2307090c'/><rect x='2' y='7' width='12' height='2' fill='%233fe08f'/></svg>">
+<style>
+  :root{
+    --bg:#07090c; --panel:#0b0f14; --edge:#161d27; --grid:#111823;
+    --dim:#46566a; --mid:#7d8fa6; --hi:#dce7f2;
+    --safe:#3fe08f; --safe-dim:#1b7f52; --budget:#1d5f6b; --scope:#2dd4bf;
+    --warn:#f5b942; --bad:#ff5757; --bad-dim:#7a2626; --probe:#a78bfa;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--mid);font-family:var(--mono)}
+  body{padding:14px;-webkit-font-smoothing:antialiased;font-size:13px;line-height:1.35}
+  .wrap{max-width:1680px;margin:0 auto}
+
+  /* ---- masthead : the endurance proof ---- */
+  .top{
+    display:flex;flex-wrap:wrap;align-items:stretch;gap:1px;
+    background:var(--edge);border:1px solid var(--edge);border-radius:5px;overflow:hidden;
+  }
+  .brand{background:var(--panel);padding:9px 14px;display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  .brand b{color:var(--hi);font-weight:600;letter-spacing:.14em;font-size:12px}
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--safe);box-shadow:0 0 9px var(--safe)}
+  .brand .dot.paused{background:var(--warn);box-shadow:0 0 9px var(--warn)}
+  .clk{background:var(--panel);padding:9px 16px;flex:0 0 auto}
+  .clk .v{color:var(--hi);font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:.04em;line-height:1.1}
+  .clk .k{color:var(--dim);font-size:9px;letter-spacing:.19em}
+  .ctr{background:var(--panel);padding:9px 14px;flex:1 1 118px;min-width:118px}
+  .ctr .k{color:var(--dim);font-size:9px;letter-spacing:.15em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ctr .row{display:flex;align-items:baseline;gap:8px;font-variant-numeric:tabular-nums;font-size:17px;line-height:1.25}
+  .ctr .s{color:var(--safe)}
+  .ctr .u{color:var(--bad)}
+  .ctr .sep{color:var(--edge);font-size:13px}
+
+  /* ---- panels ---- */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;margin-top:10px}
+  .card{
+    background:var(--panel);border:1px solid var(--edge);border-radius:5px;
+    display:flex;flex-direction:column;overflow:hidden;min-width:0;
+  }
+  .card>h2{
+    margin:0;padding:7px 11px;font-size:9.5px;font-weight:500;letter-spacing:.2em;
+    color:var(--dim);border-bottom:1px solid var(--edge);
+    display:flex;justify-content:space-between;align-items:center;gap:10px;flex:0 0 auto;
+  }
+  .card>h2 em{font-style:normal;color:var(--dim);opacity:.72;letter-spacing:.1em;text-align:right}
+  .cv{position:relative;flex:1 1 auto;min-height:0}
+  canvas{display:block;width:100%;height:100%}
+
+  .a-adv{grid-column:span 3}  .a-frm{grid-column:span 5}  .a-plt{grid-column:span 4}
+  .a-arn{grid-column:span 3}  .a-trc{grid-column:span 5}  .a-rail{grid-column:span 4}
+  .a-adv .cv,.a-frm .cv,.a-plt .cv{height:318px}
+  .a-arn .cv,.a-trc .cv,.a-rail .cv{height:236px}
+
+  /* ---- controls ---- */
+  .bar{
+    display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;
+    background:var(--panel);border:1px solid var(--edge);border-radius:5px;padding:8px 10px;
+  }
+  .bar .lbl{color:var(--dim);font-size:9px;letter-spacing:.19em;margin-right:2px}
+  button{
+    font:inherit;font-size:11px;letter-spacing:.11em;color:var(--mid);
+    background:#10161e;border:1px solid var(--edge);border-radius:4px;
+    padding:6px 11px;cursor:pointer;transition:background .12s,color .12s,border-color .12s;
+  }
+  button:hover{background:#161f2a;color:var(--hi);border-color:#27323f}
+  button:focus-visible{outline:2px solid var(--scope);outline-offset:1px}
+  button[aria-pressed="true"]{background:#10261c;color:var(--safe);border-color:var(--safe-dim)}
+  button.hot[aria-pressed="true"]{background:#2a1414;color:var(--bad);border-color:var(--bad-dim)}
+  .spacer{flex:1 1 18px}
+  .key{display:flex;flex-wrap:wrap;gap:12px;align-items:center;color:var(--dim);font-size:9.5px;letter-spacing:.11em}
+  .key i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+  .key .s i{background:var(--safe)} .key .u i{background:var(--bad)}
+  .key .b i{background:var(--budget)} .key .p i{background:var(--probe)}
+
+  .foot{margin-top:10px;color:var(--dim);font-size:10.5px;letter-spacing:.06em;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .foot a{color:var(--mid);text-decoration:none;border-bottom:1px solid var(--edge)}
+  .foot a:hover{color:var(--safe);border-color:var(--safe-dim)}
+
+  @media (max-width:1240px){
+    .a-adv,.a-arn{grid-column:span 6} .a-frm,.a-trc{grid-column:span 6}
+    .a-plt,.a-rail{grid-column:span 12}
+    .a-plt .cv{height:270px}
+  }
+  @media (max-width:760px){
+    body{padding:8px;font-size:12px}
+    .grid{gap:8px}
+    .clk{flex:1 1 auto}
+    .a-adv,.a-frm,.a-plt,.a-arn,.a-trc,.a-rail{grid-column:span 12}
+    .a-adv .cv,.a-frm .cv,.a-plt .cv{height:286px}
+    .a-arn .cv,.a-trc .cv,.a-rail .cv{height:212px}
+    .ctr{flex:1 1 44%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand"><span class="dot" id="led"></span><b>SAFELANG</b></div>
+    <div class="clk"><div class="k">WALL</div><div class="v" id="wall">00:00:00.0</div></div>
+    <div class="ctr"><div class="k">FRAMES</div><div class="row"><span class="s" id="c-frames">0</span></div></div>
+    <div class="ctr"><div class="k">DEADLINE MISS</div><div class="row"><span class="s" id="c-miss-s">0</span><span class="sep">/</span><span class="u" id="c-miss-u">0</span></div></div>
+    <div class="ctr"><div class="k">ALLOC AFTER @init</div><div class="row"><span class="s" id="c-alloc-s">0</span><span class="sep">/</span><span class="u" id="c-alloc-u">0</span></div></div>
+    <div class="ctr"><div class="k">OVERFLOW WRAP</div><div class="row"><span class="s" id="c-wrap-s">0</span><span class="sep">/</span><span class="u" id="c-wrap-u">0</span></div></div>
+    <div class="ctr"><div class="k">CONTROL LOST</div><div class="row"><span class="s" id="c-lost-s">0</span><span class="sep">/</span><span class="u" id="c-lost-u">0</span></div></div>
+  </header>
+
+  <main class="grid">
+    <section class="card a-adv"><h2><span>ADVERSARY</span><em id="h-adv">z3 · consume ⇒ emit</em></h2><div class="cv"><canvas id="cv-adv"></canvas></div></section>
+    <section class="card a-frm"><h2><span>FRAME</span><em id="h-frm">2000 ns period · 100 MHz</em></h2><div class="cv"><canvas id="cv-frm"></canvas></div></section>
+    <section class="card a-plt"><h2><span>PLANT</span><em id="h-plt">attitude hold</em></h2><div class="cv"><canvas id="cv-plt"></canvas></div></section>
+    <section class="card a-arn"><h2><span>ARENA</span><em id="h-arn">f32[64] · @space 512B</em></h2><div class="cv"><canvas id="cv-arn"></canvas></div></section>
+    <section class="card a-trc"><h2><span>TRACE</span><em id="h-trc">frame time</em></h2><div class="cv"><canvas id="cv-trc"></canvas></div></section>
+    <section class="card a-rail"><h2><span>RAIL</span><em id="h-rail">int16 integrator</em></h2><div class="cv"><canvas id="cv-rail"></canvas></div></section>
+  </main>
+
+  <div class="bar">
+    <span class="lbl">INJECT</span>
+    <button id="b-disturb">DISTURB</button>
+    <button id="b-over" class="hot" aria-pressed="false">OVERDRIVE</button>
+    <button id="b-worst" class="hot" aria-pressed="false">WORST CASE</button>
+    <span class="spacer"></span>
+    <span class="lbl">RATE</span>
+    <button class="spd" data-s="1" aria-pressed="true">1&times;</button>
+    <button class="spd" data-s="4" aria-pressed="false">4&times;</button>
+    <button class="spd" data-s="16" aria-pressed="false">16&times;</button>
+    <button id="b-pause">PAUSE</button>
+    <button id="b-reset">RESET</button>
+    <span class="spacer"></span>
+    <span class="key">
+      <span class="s"><i></i>SAFELANG</span>
+      <span class="u"><i></i>UNCONSTRAINED</span>
+      <span class="b"><i></i>@time BUDGET</span>
+      <span class="p"><i></i>SOLVER PROBE</span>
+    </span>
+  </div>
+
+  <div class="foot">
+    <span>Both plants run identical control law, identical disturbance stream.</span>
+    <span>Cycle counts from <code>safelang --time-report</code>; verdicts from <code>safelang --falsify</code>.</span>
+    <a href="https://github.com/seanwevans/SafeLang">github.com/seanwevans/SafeLang</a>
+  </div>
+</div>
+<script>
+'use strict';
+/* ============================================================================
+   SafeLang — wall time.
+   Cycle counts below are verbatim `safelang --time-report` output at 100 MHz.
+   Verdicts below are verbatim `safelang --falsify` output.
+   ==========================================================================*/
+
+// ---- the schedule -----------------------------------------------------------
+const CLOCK_MHZ = 100;                        // safelang/timing.py DEFAULT_CLOCK_HZ
+const PERIOD_NS = 2000;                       // 500 kHz control frame
+const TASKS = [
+  { name:'clamp_unit',    cyc:6,  wcet:60,  best:40,  budget:500 },
+  { name:'scale_half',    cyc:4,  wcet:40,  best:40,  budget:500 },
+  { name:'adjust_thrust', cyc:4,  wcet:40,  best:40,  budget:100 },
+  { name:'mix_channels',  cyc:42, wcet:420, best:420, budget:500 },
+];
+const REJECTED = { name:'clamp_params', cyc:34, wcet:340, budget:1000, witness:'x=0.1' };
+const SUM_BUDGET = TASKS.reduce((a,t)=>a+t.budget,0);   // 1600 ns
+const SUM_WCET   = TASKS.reduce((a,t)=>a+t.wcet,0);     //  560 ns
+
+// ---- control law (identical on both sides) ----------------------------------
+const P = {
+  Kp:2.4, Kd:1.2,       // attitude/rate demand, integrated into the accumulator
+  kp:0.25, kd:1.30,     // direct trim terms (these are what damp the loop)
+  KI:160000,            // accumulator counts per unit demand-second
+  TMAX:1.55,            // actuator authority, rad/s^2
+  DMAX:1.35,            // disturbance is physically bounded below TMAX, so the
+                        // actuator always retains margin to recover
+  BIAS:-0.34,           // steady disturbance torque
+  TAU:2.5, SIG:0.62,    // gust: OU correlation time, magnitude
+  LOSS:1.05,            // |theta| past this = control lost (~60 deg)
+  STALE:2,              // frames an overrun frame leaves the actuator stale
+};
+const CTRL_HZ = 25, CTRL_DT = 1/CTRL_HZ;
+// Disturbance seed. Chosen so the first divergence lands ~14s in: long enough
+// to see both plants track identically, short enough that nobody has to wait.
+const SEED = 3;
+const TRACE_N = 190, RAIL_N = 260, BINS = 34, BIN_NS = 120;
+
+// ---- int16, exactly as safelang/runtime.py defines it ----------------------
+const I16_MAX = 32767;
+const I16_MIN = -32768;
+function clamp16(v){                       // saturating: clamp + report
+  v = Math.round(v);
+  if (v > I16_MAX) return [I16_MAX, true];
+  if (v < I16_MIN) return [I16_MIN, true];
+  return [v, false];
+}
+function wrap16(v){                        // two's complement wraparound
+  v = Math.round(v);
+  const w = ((v + 32768) % 65536 + 65536) % 65536 - 32768;
+  return [w, w !== v];
+}
+
+// ---- utils ------------------------------------------------------------------
+const clampf = (v,a,b)=> v<a?a : v>b?b : v;
+function mulberry32(a){ return function(){
+  a |= 0; a = a + 0x6D2B79F5 | 0;
+  let t = Math.imul(a ^ a>>>15, 1|a);
+  t = t + Math.imul(t ^ t>>>7, 61|t) ^ t;
+  return ((t ^ t>>>14) >>> 0) / 4294967296;
+};}
+const fmtInt = n => n.toLocaleString('en-US');
+function fmtWall(s){
+  const h=Math.floor(s/3600), m=Math.floor(s/60)%60, sec=Math.floor(s)%60, t=Math.floor((s%1)*10);
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')+'.'+t;
+}
+
+// ---- state ------------------------------------------------------------------
+const newPlant = () => ({ th:0, om:0, iacc:0, cmd:0, stale:0, dead:0, lost:0 });
+let S, speed = 1, paused = false;
+
+function reset(){
+  S = {
+    wall:0, acc:0, frames:0,
+    miss:{s:0,u:0}, alloc:{s:0,u:0}, wrap:{s:0,u:0}, lost:{s:0,u:0}, sat:0,
+    safe:newPlant(), unsafe:newPlant(),
+    gust:0, disturb:0,
+    parts:TASKS.map(t=>t.wcet), totS:SUM_WCET, totU:SUM_WCET, spikeU:0,
+    trace:[], hist:{s:new Array(BINS).fill(0), u:new Array(BINS).fill(0)},
+    rail:[],
+    initT:0, cursor:0, heap:[], heapTop:0, leak:0, oom:0,
+    probes:[], hole:0, witness:0, pClock:0,
+    over:false, worst:false,
+    rng:mulberry32(SEED),
+  };
+}
+reset();
+
+// ---- one control frame ------------------------------------------------------
+function step(){
+  const R = S.rng;
+  S.frames++;
+
+  // --- @init: the one allocation burst, then the arena is frozen forever ---
+  if (S.initT < 1) S.initT = Math.min(1, S.initT + CTRL_DT/1.1);
+
+  // --- execution time -------------------------------------------------------
+  // SafeLang: every path is bounded by the static WCET. Actual varies only
+  // where a guard's branch is or is not taken; it can never exceed the bound.
+  let totS = 0;
+  for (let i=0;i<TASKS.length;i++){
+    const t = TASKS[i];
+    const v = S.worst ? t.wcet : (t.best + (t.wcet - t.best) * (R() < 0.42 ? 1 : 0));
+    S.parts[i] = v; totS += v;
+  }
+  S.totS = totS;
+
+  // Unconstrained: a data-dependent `while`, plus an allocator that sometimes
+  // has to go and find memory. Neither has a worst case anybody can state.
+  let totU = SUM_WCET + 30 + R()*70;
+  let spike = 0;
+  if (S.worst)          spike = 3200 + R()*2600;
+  else if (R() < 0.055) spike = 900 + R()*1800;     // unbounded loop trip count
+  if (R() < 0.020)      spike += 1400 + R()*2200;   // allocator pause
+  if (R() < 0.004)      spike += 4200 + R()*3600;   // compaction pause
+  totU += spike; S.spikeU = spike;
+  S.totU = totU;
+
+  const missU = totU > PERIOD_NS;
+  if (missU) S.miss.u++;
+  // S.miss.s is never incremented: totS <= SUM_WCET = 560ns <= 2000ns period.
+
+  S.trace.push({ s:totS, u:totU, m:missU });
+  if (S.trace.length > TRACE_N) S.trace.shift();
+  S.hist.s[Math.min(BINS-1, Math.floor(totS/BIN_NS))]++;
+  S.hist.u[Math.min(BINS-1, Math.floor(totU/BIN_NS))]++;
+
+  // --- allocation -----------------------------------------------------------
+  // SafeLang allocates once, in @init, and never again: S.alloc.s stays 0.
+  if (R() < 0.25){
+    S.alloc.u++;
+    const leak = R() < 0.055;                           // some blocks never come back
+    S.heap.push({ at:S.heapTop % 100, sz:1.6 + R()*5.4, age:0, leak });
+    S.heapTop += 3 + R()*11;
+    if (leak) S.leak++;
+  }
+  for (const b of S.heap) b.age += CTRL_DT;
+  S.heap = S.heap.filter(b => b.leak || b.age < 2.2 + R()*3.4);   // frees leave holes
+  if (S.leak > 26){ S.leak = 0; S.heap = []; S.heapTop = 0; S.oom = 1; }
+  if (S.oom > 0) S.oom = Math.max(0, S.oom - CTRL_DT*1.1);
+
+  // --- disturbance: one stream, fed to both plants --------------------------
+  const g = Math.sqrt(-2*Math.log(1-R()))*Math.cos(2*Math.PI*R());
+  S.gust += (-S.gust*CTRL_DT/P.TAU) + P.SIG*Math.sqrt(2*CTRL_DT/P.TAU)*g;
+  let dist = P.BIAS + S.gust*0.62 + S.disturb;
+  if (S.over) dist -= 1.05;                             // thruster stuck open
+  dist = clampf(dist, -P.DMAX, P.DMAX);
+  S.disturb *= 0.55;
+
+  fly(S.safe,  dist, true,  false);
+  fly(S.unsafe,dist, false, missU ? Math.ceil((totU-PERIOD_NS)/PERIOD_NS) : 0);
+
+  S.rail.push({ s:S.safe.iacc, u:S.unsafe.iacc, w:S.unsafe.wrapped, t:S.safe.satted });
+  if (S.rail.length > RAIL_N) S.rail.shift();
+
+  // --- adversary: keep probing the two contracts ----------------------------
+  S.pClock += CTRL_DT;
+  if (S.pClock > 0.045){
+    S.pClock = 0;
+    const x = R()*1.5;
+    S.probes.push({ x, k:R()<0.5?0:1, p:0, bad:(x>0.1 && x<=1.0) });
+    if (S.probes.length > 46) S.probes.shift();
+  }
+  for (const p of S.probes) p.p = Math.min(1, p.p + CTRL_DT*3.4);
+  const found = S.probes.some(p=>p.k===1 && p.bad && p.p>=1);
+  if (found){ S.hole = Math.min(1, S.hole + CTRL_DT*1.5); S.witness = 1; }
+  S.witness = Math.max(0, S.witness - CTRL_DT*0.35);
+}
+
+// theta/omega integration. `sat` selects saturating vs wrapping arithmetic;
+// `staleFor` is how many frames the actuator holds a stale command.
+function fly(p, dist, sat, staleFor){
+  p.satted = false; p.wrapped = false;
+  if (p.dead > 0){                      // tumbling after loss of control
+    p.dead -= CTRL_DT;
+    p.om += (p.om > 0 ? 1.3 : -1.3) * CTRL_DT;
+    p.th += p.om * CTRL_DT;
+    if (p.dead <= 0){ p.th = 0; p.om = 0; p.iacc = 0; p.cmd = 0; p.stale = 0; }
+    return;
+  }
+  const err = -p.th;
+
+  // The actuator command lives in a 16-bit accumulator. Every frame the
+  // controller integrates its demand into it. This is the whole difference
+  // between the two plants: one clamps here, the other wraps here.
+  const inc = (P.Kp*err - P.Kd*p.om) * P.KI * CTRL_DT;
+  if (sat){
+    const [v, s] = clamp16(p.iacc + inc);
+    p.iacc = v;
+    if (s){ p.satted = true; S.sat++; }                 // clamped, flagged, safe
+  } else {
+    const [v, w] = wrap16(p.iacc + inc);
+    p.iacc = v;
+    if (w){ p.wrapped = true; S.wrap.u++; }             // sign flip, unannounced
+  }
+
+  if (staleFor > 0) p.stale = Math.max(p.stale, staleFor * P.STALE);
+  if (p.stale > 0) p.stale--;                           // actuator holds last command
+  else p.cmd = clampf(p.iacc/32767 + P.kp*err - P.kd*p.om, -1, 1);
+
+  p.om += (p.cmd*P.TMAX + dist) * CTRL_DT;
+  p.th += p.om * CTRL_DT;
+
+  if (Math.abs(p.th) > P.LOSS){
+    p.dead = 0.85;
+    if (sat) S.lost.s++; else S.lost.u++;
+  }
+}
+
+// ============================================================================
+// rendering
+// ============================================================================
+const C = {
+  bg:'#0b0f14', grid:'#131b26', edge:'#1b2530', dim:'#46566a', mid:'#7d8fa6', hi:'#dce7f2',
+  safe:'#3fe08f', safeD:'#1b7f52', safeF:'rgba(63,224,143,.10)',
+  bud:'#1d5f6b', scope:'#2dd4bf', warn:'#f5b942', bad:'#ff5757', badF:'rgba(255,87,87,.10)',
+  probe:'#a78bfa',
+};
+const MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+
+function mk(id){
+  const c = document.getElementById(id), x = c.getContext('2d');
+  const o = { c, x, w:1, h:1 };
+  const fit = () => {
+    const r = c.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
+    if (!r.width || !r.height) return;
+    o.w = r.width; o.h = r.height;
+    c.width = Math.round(r.width*d); c.height = Math.round(r.height*d);
+    x.setTransform(d,0,0,d,0,0);
+  };
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(c);
+  else window.addEventListener('resize', fit);
+  fit();
+  return o;
+}
+const CV = { adv:mk('cv-adv'), frm:mk('cv-frm'), plt:mk('cv-plt'),
+             arn:mk('cv-arn'), trc:mk('cv-trc'), rail:mk('cv-rail') };
+
+function txt(x,s,X,Y,col,size,align,w){
+  x.font = (w||400)+' '+(size||10)+'px '+MONO;
+  x.fillStyle = col; x.textAlign = align||'left'; x.textBaseline='middle';
+  x.fillText(s,X,Y);
+}
+function dash(x,a,b,c,d,col,pat){
+  x.save(); x.setLineDash(pat||[3,3]); x.strokeStyle=col; x.lineWidth=1;
+  x.beginPath(); x.moveTo(a,b); x.lineTo(c,d); x.stroke(); x.restore();
+}
+function hatch(x,X,Y,W,H,col,gap){
+  x.save(); x.beginPath(); x.rect(X,Y,W,H); x.clip();
+  x.strokeStyle=col; x.lineWidth=1; x.beginPath();
+  for (let i=-H; i<W; i+=(gap||6)){ x.moveTo(X+i,Y+H); x.lineTo(X+i+H,Y); }
+  x.stroke(); x.restore();
+}
+const clear = o => { o.x.clearRect(0,0,o.w,o.h); };
+
+// ---- ADVERSARY --------------------------------------------------------------
+// Two contracts, drawn as transfer functions over their consume domain with the
+// emit domain as a band. The solver rains probes into the domain. One contract
+// has a hole in it; the probes find it.
+function drawAdv(o){
+  const x=o.x, W=o.w, H=o.h; clear(o);
+  const pad=11, footH=15, gap=12;
+  const panelH=(H - pad*2 - footH - gap)/2;
+
+  const panel = (top, name, verdict, holed) => {
+    const L=pad+30, R=W-pad-6, T=top+15, B=top+panelH-13;
+    if (B<=T) return;
+    const px = v => L + (v/1.5)*(R-L);            // consume domain x ∈ [0, 3/2]
+    const py = v => B - ((v+0.25)/1.6)*(B-T);     // value axis [-0.25, 1.35]
+
+    // the emit domain the contract promises
+    x.fillStyle=C.safeF; x.fillRect(L, py(1), R-L, py(0)-py(1));
+    dash(x,L,py(1),R,py(1),C.safeD); dash(x,L,py(0),R,py(0),C.safeD);
+    x.strokeStyle=C.edge; x.lineWidth=1; x.strokeRect(L+.5,T+.5,R-L,B-T);
+    txt(x,'1', L-5, py(1), C.dim, 8,'right');
+    txt(x,'0', L-5, py(0), C.dim, 8,'right');
+    txt(x,'0', L, B+8, C.dim, 8,'center');
+    txt(x,'3/2', R, B+8, C.dim, 8,'right');
+
+    if (!holed){                                   // cl_x = x ; x > 1 ? cl_x = 1
+      x.strokeStyle=C.safe; x.lineWidth=1.8; x.beginPath();
+      x.moveTo(px(0),py(0)); x.lineTo(px(1),py(1)); x.lineTo(px(1.5),py(1)); x.stroke();
+    } else {                                       // only the two tails assign cl_x
+      const a=px(0.1), b=px(1);
+      x.save(); x.globalAlpha=0.16+0.46*S.hole;
+      hatch(x,a,T+1,b-a,B-T-1,'#b03a3a',7); x.restore();
+      dash(x,a,T,a,B,C.bad,[2,3]); dash(x,b,T,b,B,C.bad,[2,3]);
+      x.strokeStyle=C.bad; x.lineWidth=1.8;
+      x.beginPath(); x.moveTo(px(0),py(0)); x.lineTo(a,py(0)); x.stroke();
+      x.beginPath(); x.moveTo(b,py(1)); x.lineTo(px(1.5),py(1)); x.stroke();
+      if (S.hole>0.4){
+        x.save(); x.globalAlpha=Math.min(1,S.hole);
+        txt(x,'UNASSIGNED',(a+b)/2, T+11, C.bad, 8,'center',700); x.restore();
+      }
+    }
+
+    for (const p of S.probes){
+      if ((p.k===1) !== holed) continue;
+      const X=px(p.x);
+      const land = holed ? (p.bad ? py(0.52) : py(p.x<=0.1?0:1)) : py(Math.min(p.x,1));
+      const Y=T+(land-T)*p.p, hit=p.p>=1, bad=hit&&holed&&p.bad;
+      if (!hit){ x.globalAlpha=.20; x.strokeStyle=C.probe; x.lineWidth=1;
+        x.beginPath(); x.moveTo(X,T); x.lineTo(X,Y); x.stroke(); x.globalAlpha=1; }
+      x.fillStyle = bad ? C.bad : (hit ? (holed?'#7f9c8d':C.safe) : C.probe);
+      x.globalAlpha = hit?1:.6;
+      x.beginPath(); x.arc(X,Y, bad?2.8:1.8, 0, 6.284); x.fill();
+      if (bad){ x.globalAlpha=.30; x.beginPath(); x.arc(X,Y,5.5,0,6.284); x.fill(); }
+      x.globalAlpha=1;
+    }
+
+    txt(x,name, L-30, top+5, holed?C.bad:C.safe, 9.5,'left',600);
+    txt(x,verdict, R, top+5, holed?C.bad:C.safe, 9,'right',700);
+    if (holed && S.witness>0){
+      x.save(); x.globalAlpha=.4+.6*S.witness;
+      txt(x,'witness x=0.1', R, T+11, C.bad, 8.5,'right',700); x.restore();
+    }
+  };
+
+  panel(pad, 'clamp_unit', 'OK', false);
+  panel(pad+panelH+gap, 'clamp_params', 'FALSIFIED', true);
+  txt(x,'consume x ∈ [0, 3/2]   ⇒   emit cl_x ∈ [0, 1]', pad, H-9, C.dim, 8.5);
+}
+
+// ---- FRAME ------------------------------------------------------------------
+// The schedule, in nanoseconds. Brackets are declared @time budgets; fills are
+// what the frame actually spent. Both containments are visible at once.
+function drawFrm(o){
+  const x=o.x, W=o.w, H=o.h; clear(o);
+  const L=104, R=W-16, T=26;
+  const px = ns => L + (ns/PERIOD_NS)*(R-L);
+  const rowH = Math.max(26, (H - T - 108)/TASKS.length);
+  const gridB = T + TASKS.length*rowH;
+
+  for (let ns=0; ns<=PERIOD_NS; ns+=500){
+    dash(x,px(ns),T-6,px(ns),gridB, ns===0?C.edge:C.grid,[2,4]);
+    txt(x, ns+'', px(ns), T-14, C.dim, 8.5, ns===0?'left':(ns===PERIOD_NS?'right':'center'));
+  }
+  txt(x,'ns', L-12, T-14, C.dim, 8.5,'right');
+
+  let off=0;
+  for (let i=0;i<TASKS.length;i++){
+    const t=TASKS[i], cy=T+i*rowH+rowH/2, act=S.parts[i];
+    const a=px(off), b=px(off+t.budget), bh=11, brh=19;
+    x.strokeStyle=C.bud; x.lineWidth=1; x.beginPath();
+    x.moveTo(a+.5,cy-brh/2); x.lineTo(a+.5,cy+brh/2);
+    x.moveTo(b-.5,cy-brh/2); x.lineTo(b-.5,cy+brh/2);
+    x.moveTo(a,cy-brh/2+.5); x.lineTo(b,cy-brh/2+.5);
+    x.moveTo(a,cy+brh/2-.5); x.lineTo(b,cy+brh/2-.5); x.stroke();
+    x.fillStyle=C.safe; x.fillRect(a+1, cy-bh/2, Math.max(2,px(off+act)-a-1), bh);
+    const wx=px(off+t.wcet);
+    x.strokeStyle=C.hi; x.lineWidth=1;
+    x.beginPath(); x.moveTo(wx+.5,cy-brh/2+1); x.lineTo(wx+.5,cy+brh/2-1); x.stroke();
+    txt(x,t.name, L-12, cy, C.mid, 9.5,'right');
+    txt(x, t.wcet+'/'+t.budget+'ns', b+7, cy, C.dim, 8.5,'left');
+    off += t.budget;
+  }
+
+  const sa=px(SUM_BUDGET), sb=px(PERIOD_NS), sh=gridB-T-8;
+  hatch(x,sa,T+4,sb-sa,sh,'#1c2836',7);
+  txt(x,'SLACK', (sa+sb)/2, T+sh/2-2, C.dim, 8.5,'center');
+  txt(x,(PERIOD_NS-SUM_BUDGET)+'ns', (sa+sb)/2, T+sh/2+10, C.dim, 8.5,'center');
+
+  x.strokeStyle=C.bad; x.lineWidth=1.4;
+  x.beginPath(); x.moveTo(px(PERIOD_NS)-.5,T-6); x.lineTo(px(PERIOD_NS)-.5,gridB); x.stroke();
+
+  // the falsified contract never reaches the schedule
+  const ry=gridB+24;
+  txt(x,REJECTED.name, L-12, ry, C.dim, 9.5,'right');
+  x.save(); x.strokeStyle=C.bad; x.globalAlpha=.85; x.lineWidth=1;
+  const nw=REJECTED.name.length*5.9;
+  x.beginPath(); x.moveTo(L-12-nw,ry+.5); x.lineTo(L-10,ry+.5); x.stroke(); x.restore();
+  dash(x,L,ry,px(REJECTED.budget),ry,'#3a2630',[3,3]);
+  txt(x,'✗ FALSIFIED  '+REJECTED.witness+'  ·  not scheduled', L+8, ry, C.bad, 9,'left',600);
+
+  // the same workload with no bound on it
+  const uy=H-34;
+  txt(x,'unconstrained', L-12, uy, C.dim, 9.5,'right');
+  const uw=px(Math.min(S.totU,PERIOD_NS))-L, over=S.totU>PERIOD_NS;
+  x.fillStyle = over ? C.bad : '#96602c';
+  x.fillRect(L, uy-6, Math.max(2,uw), 12);
+  if (over){
+    x.fillStyle=C.bad; x.beginPath();
+    x.moveTo(R-2,uy); x.lineTo(R-13,uy-6); x.lineTo(R-13,uy+6); x.fill();
+    txt(x, Math.round(S.totU)+'ns', R-18, uy, C.bad, 8.5,'right',700);
+  } else txt(x, Math.round(S.totU)+'ns', L+uw+7, uy, C.dim, 8.5,'left');
+  txt(x,'Σ WCET '+SUM_WCET+'ns   ·   Σ @time '+SUM_BUDGET+'ns   ·   period '+PERIOD_NS+'ns',
+      16, H-12, C.dim, 8.5,'left');
+}
+
+// ---- PLANT ------------------------------------------------------------------
+function drawPlt(o){
+  const x=o.x, W=o.w, H=o.h; clear(o);
+  const half=W/2;
+  half1(x, 0,     half, H, S.safe,   'SAFELANG',      C.safe, S.lost.s, true);
+  half1(x, half,  half, H, S.unsafe, 'UNCONSTRAINED', C.bad,  S.lost.u, false);
+  x.strokeStyle=C.edge; x.beginPath(); x.moveTo(half+.5,8); x.lineTo(half+.5,H-8); x.stroke();
+}
+function half1(x, X, W, H, p, name, col, lost, isSafe){
+  const cx=X+W/2, cy=H*0.52, gy=H-32;
+  x.save(); x.beginPath(); x.rect(X,0,W,H); x.clip();
+  if (p.dead>0){ x.fillStyle='rgba(255,87,87,'+(0.05+0.11*Math.min(1,p.dead*2))+')'; x.fillRect(X,0,W,H); }
+
+  const R=Math.min(W*0.9,H)*0.30, s=R*0.62;
+
+  // attitude scale: a tolerance band, not a spotlight
+  x.save(); x.translate(cx,cy);
+  x.strokeStyle=C.edge; x.lineWidth=1;
+  for (let d=-60; d<=60; d+=15){
+    const a=d*Math.PI/180, r0=R*1.34, r1=(d%30===0)?R*1.50:R*1.43;
+    x.globalAlpha = d===0?0.85:0.42;
+    x.beginPath();
+    x.moveTo(Math.sin(a)*r0,-Math.cos(a)*r0); x.lineTo(Math.sin(a)*r1,-Math.cos(a)*r1); x.stroke();
+  }
+  x.globalAlpha=1;
+  x.strokeStyle='rgba(125,143,166,.30)'; x.lineWidth=1;
+  x.beginPath(); x.arc(0,0,R*1.34,-Math.PI/2-0.262,-Math.PI/2+0.262); x.stroke();
+  x.restore();
+  dash(x,cx,cy-R*1.55,cx,cy-R*0.2,'#243040',[3,4]);
+  x.strokeStyle=C.edge; x.lineWidth=1;
+  x.beginPath(); x.moveTo(X+14,gy+.5); x.lineTo(X+W-14,gy+.5); x.stroke();
+
+  x.save(); x.translate(cx,cy); x.rotate(p.th);
+
+  // plume, sized by the commanded deflection
+  const c = p.dead>0 ? (p.om>0?1:-1) : p.cmd, mag=Math.abs(c)*s*2.0;
+  if (mag>2){
+    const sx=(c>0?1:-1)*s*0.40, y0=s*0.88;
+    const g=x.createLinearGradient(sx,y0,sx,y0+mag);
+    const hot = p.dead>0 ? C.bad : C.warn;
+    g.addColorStop(0,hot); g.addColorStop(0.35,'rgba(245,185,66,.45)'); g.addColorStop(1,'rgba(245,185,66,0)');
+    x.fillStyle = p.dead>0 ? (()=>{ const gg=x.createLinearGradient(sx,y0,sx,y0+mag);
+      gg.addColorStop(0,C.bad); gg.addColorStop(1,'rgba(255,87,87,0)'); return gg; })() : g;
+    x.beginPath();
+    x.moveTo(sx-s*0.26,y0); x.lineTo(sx+s*0.26,y0);
+    x.lineTo(sx+s*0.10,y0+mag); x.lineTo(sx-s*0.10,y0+mag); x.closePath(); x.fill();
+  }
+
+  // body
+  x.beginPath();
+  x.moveTo(0,-s*1.55); x.lineTo(s*0.30,-s*0.55); x.lineTo(s*0.66,s*0.58);
+  x.lineTo(s*0.32,s*0.88); x.lineTo(-s*0.32,s*0.88); x.lineTo(-s*0.66,s*0.58);
+  x.lineTo(-s*0.30,-s*0.55); x.closePath();
+  x.fillStyle = p.dead>0 ? 'rgba(255,87,87,.17)' : 'rgba(125,143,166,.12)';
+  x.fill(); x.strokeStyle = p.dead>0 ? C.bad : col; x.lineWidth=1.7; x.stroke();
+  x.beginPath(); x.arc(0,-s*0.18,s*0.17,0,6.284);
+  x.strokeStyle = p.dead>0 ? C.bad : col; x.globalAlpha=.55; x.lineWidth=1.2; x.stroke(); x.globalAlpha=1;
+  x.restore();
+
+  txt(x,name, X+12, 14, col, 9.5,'left',700);
+  const deg=p.th*57.2958;
+  txt(x,'θ '+(deg>=0?'+':'')+deg.toFixed(1)+'°', X+12, H-14, p.dead>0?C.bad:C.mid, 10,'left');
+  txt(x,'LOST '+fmtInt(lost), X+W-12, H-14, lost?C.bad:C.safe, 10,'right',700);
+  if (isSafe && p.satted) txt(x,'SATURATED', X+W-12, 14, C.warn, 9,'right',700);
+  if (!isSafe && p.wrapped) txt(x,'WRAPPED', X+W-12, 14, C.bad, 9,'right',700);
+  else if (!isSafe && p.stale>0) txt(x,'STALE', X+W-12, 14, C.warn, 9,'right',700);
+  if (p.dead>0){
+    x.save(); x.globalAlpha=0.55+0.45*Math.abs(Math.sin(p.dead*18));
+    txt(x,'CONTROL LOST', X+W/2, 32, C.bad, 12,'center',700); x.restore();
+  }
+  x.restore();
+}
+
+// ---- ARENA ------------------------------------------------------------------
+function drawArn(o){
+  const x=o.x, W=o.w, H=o.h; clear(o);
+  const pad=12, heapH=30, titleH=17;
+  const aTop=titleH+4, aBot=H-heapH-26;
+  const side=Math.min((aBot-aTop)/8, 21);
+  const gw=side*8, gx=pad+2, gy=aTop+Math.max(0,((aBot-aTop)-gw)/2);
+
+  const filled=Math.floor(64*S.initT);
+  const win=(S.frames % 8)*8;                       // mix_channels: loop(i = 0..7)
+  for (let i=0;i<64;i++){
+    const X=gx+(i%8)*side, Y=gy+Math.floor(i/8)*side;
+    const on=i<filled, active=S.initT>=1 && i>=win && i<win+8;
+    x.fillStyle = !on ? '#0e141c' : active ? 'rgba(63,224,143,.55)' : 'rgba(63,224,143,.12)';
+    x.fillRect(X+1,Y+1,side-2,side-2);
+    x.strokeStyle = active ? C.safe : '#1a2430'; x.lineWidth=1;
+    x.strokeRect(X+1.5,Y+1.5,side-3,side-3);
+  }
+  x.strokeStyle = S.initT>=1 ? C.safe : C.warn; x.lineWidth=1.6;
+  x.strokeRect(gx+.5,gy+.5,gw,gw);
+
+  txt(x, S.initT<1?'@init …':'@init ✓  FROZEN', W-pad, 10, S.initT<1?C.warn:C.safe, 9,'right',600);
+
+  const rx=gx+gw+16;
+  txt(x,'alloc after @init', rx, gy+10, C.dim, 8.5,'left');
+  txt(x,'0', rx, gy+30, C.safe, 21,'left',600);
+  txt(x,'reads this frame', rx, gy+54, C.dim, 8.5,'left');
+  txt(x,'loop(i = 0..7)', rx, gy+68, C.safe, 9,'left');
+  txt(x,'trip count 8', rx, gy+82, C.dim, 8.5,'left');
+
+  // the same workload on a heap that nobody bounded
+  const hy=H-heapH-8, hx=pad+2, hw=W-pad*2-4;
+  txt(x,'unconstrained heap', hx, hy-9, C.dim, 8.5,'left');
+  txt(x,'alloc '+fmtInt(S.alloc.u), hx+hw, hy-9, C.bad, 9,'right',600);
+  x.strokeStyle=C.edge; x.lineWidth=1; x.strokeRect(hx+.5,hy+.5,hw,heapH);
+  for (const b of S.heap){
+    const X=hx+(b.at/100)*hw, Wd=Math.max(2,(b.sz/100)*hw);
+    if (X+Wd>hx+hw-1) continue;
+    x.fillStyle = b.leak ? 'rgba(255,87,87,.46)' : 'rgba(255,87,87,.20)';
+    x.fillRect(X+1,hy+2,Wd-1,heapH-4);
+    x.strokeStyle = b.leak ? 'rgba(255,87,87,.75)' : 'rgba(255,87,87,.36)';
+    x.strokeRect(X+1.5,hy+2.5,Wd-2,heapH-5);
+  }
+  if (S.oom>0){
+    x.fillStyle='rgba(255,87,87,'+(S.oom*.34)+')'; x.fillRect(hx,hy,hw,heapH);
+    txt(x,'OOM · COMPACT', hx+hw/2, hy+heapH/2, C.bad, 10,'center',700);
+  }
+}
+
+// ---- TRACE ------------------------------------------------------------------
+// Frame time over the last TRACE_N frames, sharing a y axis with the histogram
+// of every frame since reset.
+function drawTrc(o){
+  const x=o.x, W=o.w, H=o.h; clear(o);
+  const T=16, B=H-20, L=44, HW=Math.min(96, W*0.30), R=W-HW-16;
+  const NS_TOP=3200;
+  const py = ns => B - Math.min(1, ns/NS_TOP)*(B-T);
+
+  for (let ns=0; ns<=3000; ns+=1000){
+    dash(x,L,py(ns),W-12,py(ns),C.grid,[2,4]);
+    txt(x,(ns/1000)+'µs', L-6, py(ns), C.dim, 8.5,'right');
+  }
+  // the deadline
+  dash(x,L,py(PERIOD_NS),W-12,py(PERIOD_NS),C.bad,[5,3]);
+  txt(x,'DEADLINE', W-14, py(PERIOD_NS)-8, C.bad, 8.5,'right',600);
+
+  const n=S.trace.length;
+  if (n>1){
+    const dx=(R-L)/(TRACE_N-1);
+    const line=(key,col,wd)=>{
+      x.strokeStyle=col; x.lineWidth=wd; x.beginPath();
+      for (let i=0;i<n;i++){
+        const X=L+(i+(TRACE_N-n))*dx, Y=py(S.trace[i][key]);
+        i?x.lineTo(X,Y):x.moveTo(X,Y);
+      }
+      x.stroke();
+    };
+    line('u', C.bad, 1);
+    let lastClip=-99;
+    for (let i=0;i<n;i++){                     // spikes that leave the chart
+      if (S.trace[i].u > NS_TOP && i-lastClip > 2){
+        const X=L+(i+(TRACE_N-n))*dx;
+        x.fillStyle=C.bad; x.beginPath();
+        x.moveTo(X,T-3); x.lineTo(X-3.2,T+3); x.lineTo(X+3.2,T+3); x.fill();
+        lastClip=i;
+      }
+    }
+    line('s', C.safe, 1.6);
+  }
+  txt(x,'frame time', L, 7, C.dim, 8.5,'left');
+  txt(x,'0', L-6, B, C.dim, 8.5,'right');
+
+  // histogram, same y axis
+  const hx0=R+14;
+  x.strokeStyle=C.edge; x.beginPath(); x.moveTo(hx0-6.5,T); x.lineTo(hx0-6.5,B); x.stroke();
+  let mx=1;
+  for (let i=0;i<BINS;i++){ mx=Math.max(mx,S.hist.s[i],S.hist.u[i]); }
+  const lg = v => v<=0?0:Math.log10(1+v)/Math.log10(1+mx);
+  for (let i=0;i<BINS;i++){
+    const y0=py((i+1)*BIN_NS), y1=py(i*BIN_NS), hgt=Math.max(1,y1-y0);
+    if (S.hist.u[i]>0){ x.fillStyle='rgba(255,87,87,.55)'; x.fillRect(hx0, y0, lg(S.hist.u[i])*(W-14-hx0), hgt); }
+    if (S.hist.s[i]>0){ x.fillStyle=C.safe;                 x.fillRect(hx0, y0, lg(S.hist.s[i])*(W-14-hx0), hgt); }
+  }
+  txt(x,'all frames', hx0, 7, C.dim, 8.5,'left');
+}
+
+// ---- RAIL -------------------------------------------------------------------
+// The 16-bit actuator accumulator on both plants. Same demand, same arithmetic
+// — except one saturates at the rail and the other wraps through it.
+function drawRail(o){
+  const x=o.x, W=o.w, H=o.h; clear(o);
+  const T=20, B=H-24, L=54, R=W-12, SPAN=42000;
+  const py = v => (T+B)/2 - (v/SPAN)*(B-T)/2;
+
+  dash(x,L,py(0),R,py(0),C.grid,[2,4]);
+  x.strokeStyle=C.warn; x.lineWidth=1; x.globalAlpha=.55;
+  x.setLineDash([5,3]);
+  x.beginPath(); x.moveTo(L,py(I16_MAX)); x.lineTo(R,py(I16_MAX));
+  x.moveTo(L,py(I16_MIN)); x.lineTo(R,py(I16_MIN)); x.stroke();
+  x.setLineDash([]); x.globalAlpha=1;
+  txt(x,'32767',  L-6, py(I16_MAX), C.warn, 8.5,'right');
+  txt(x,'-32768', L-6, py(I16_MIN), C.warn, 8.5,'right');
+  txt(x,'0',      L-6, py(0),       C.dim,  8.5,'right');
+
+  const n=S.rail.length;
+  if (n>1){
+    const dx=(R-L)/(RAIL_N-1);
+    // unsafe: break the line at each wrap and mark the discontinuity
+    x.strokeStyle=C.bad; x.lineWidth=1; x.beginPath();
+    let pen=false, lastW=-99;
+    for (let i=0;i<n;i++){
+      const X=L+(i+(RAIL_N-n))*dx, Y=py(S.rail[i].u);
+      if (S.rail[i].w){
+        x.stroke(); x.beginPath(); pen=false;
+        if (i-lastW > 5){                       // mark the first cliff of a burst
+          dash(x,X,py(I16_MAX),X,py(I16_MIN),C.bad,[2,2]);
+          x.fillStyle=C.bad; x.beginPath(); x.arc(X,Y,2.4,0,6.284); x.fill();
+        }
+        lastW=i; x.strokeStyle=C.bad; x.beginPath(); continue;
+      }
+      pen?x.lineTo(X,Y):x.moveTo(X,Y); pen=true;
+    }
+    x.stroke();
+    // safe
+    x.strokeStyle=C.safe; x.lineWidth=1.6; x.beginPath();
+    for (let i=0;i<n;i++){
+      const X=L+(i+(RAIL_N-n))*dx, Y=py(S.rail[i].s);
+      i?x.lineTo(X,Y):x.moveTo(X,Y);
+    }
+    x.stroke();
+    for (let i=0;i<n;i++){                       // clamp events
+      if (S.rail[i].t){
+        const X=L+(i+(RAIL_N-n))*dx;
+        x.fillStyle=C.warn; x.fillRect(X-1, py(S.rail[i].s)-3, 2, 6);
+      }
+    }
+  }
+  txt(x,'int16 accumulator', L, 9, C.dim, 8.5,'left');
+  txt(x,'SATURATED '+fmtInt(S.sat), L, H-10, C.warn, 9,'left',600);
+  txt(x,'WRAPPED '+fmtInt(S.wrap.u), R, H-10, C.bad, 9,'right',600);
+}
+
+// ---- frame ------------------------------------------------------------------
+const $ = id => document.getElementById(id);
+const HUD = { wall:$('wall'), frames:$('c-frames'),
+  ms:$('c-miss-s'), mu:$('c-miss-u'), as:$('c-alloc-s'), au:$('c-alloc-u'),
+  ws:$('c-wrap-s'), wu:$('c-wrap-u'), ls:$('c-lost-s'), lu:$('c-lost-u') };
+let hudT=0;
+function hud(){
+  HUD.wall.textContent=fmtWall(S.wall);
+  HUD.frames.textContent=fmtInt(S.frames);
+  HUD.ms.textContent=fmtInt(S.miss.s);  HUD.mu.textContent=fmtInt(S.miss.u);
+  HUD.as.textContent=fmtInt(S.alloc.s); HUD.au.textContent=fmtInt(S.alloc.u);
+  HUD.ws.textContent=fmtInt(S.wrap.s);  HUD.wu.textContent=fmtInt(S.wrap.u);
+  HUD.ls.textContent=fmtInt(S.lost.s);  HUD.lu.textContent=fmtInt(S.lost.u);
+}
+$('h-frm').textContent=CLOCK_MHZ+' MHz · Σ @time '+SUM_BUDGET+'ns ≤ '+PERIOD_NS+'ns period';
+$('h-trc').textContent='WCET '+SUM_WCET+'ns · deadline '+PERIOD_NS+'ns';
+$('h-rail').textContent='int16 · [-32768, 32767]';
+$('h-adv').textContent='2 contracts · 1 falsified';
+
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.12,(now-last)/1000); last=now;
+  if (!paused){
+    S.wall+=dt;
+    S.acc+=dt*CTRL_HZ*speed;
+    let k=0; while (S.acc>=1 && k<600){ step(); S.acc-=1; k++; }
+    if (k>=600) S.acc=0;
+  }
+  drawAdv(CV.adv); drawFrm(CV.frm); drawPlt(CV.plt);
+  drawArn(CV.arn); drawTrc(CV.trc); drawRail(CV.rail);
+  if (now-hudT>90){ hud(); hudT=now; }
+  requestAnimationFrame(loop);
+}
+
+// ---- controls ---------------------------------------------------------------
+const led=$('led');
+function setPaused(v){
+  paused=v; $('b-pause').textContent=v?'RESUME':'PAUSE';
+  led.classList.toggle('paused',v);
+}
+// A pointer click leaves focus on the button, which would swallow Space; a
+// keyboard activation (detail === 0) must keep it.
+const unfocus = e => { if (e.detail) e.currentTarget.blur(); };
+const on = (el,fn) => { el.addEventListener('click', e => { fn(e); unfocus(e); }); };
+on($('b-pause'), ()=> setPaused(!paused));
+on($('b-reset'), ()=>{ const w=S.worst,o=S.over; reset(); S.worst=w; S.over=o; hud(); });
+on($('b-disturb'), ()=>{ S.disturb += (S.rng()<0.5?-1:1)*2.6; });
+const tog=(el,key)=> on(el, ()=>{ S[key]=!S[key]; el.setAttribute('aria-pressed',String(S[key])); });
+tog($('b-over'),'over'); tog($('b-worst'),'worst');
+document.querySelectorAll('.spd').forEach(b=>{
+  on(b, ()=>{ speed=+b.dataset.s;
+    document.querySelectorAll('.spd').forEach(o=>o.setAttribute('aria-pressed',String(o===b))); });
+});
+addEventListener('keydown', e=>{
+  if (e.target.tagName==='BUTTON' && e.key===' ') return;
+  if (e.key===' '){ e.preventDefault(); setPaused(!paused); }
+  if (e.key==='d') $('b-disturb').click();
+  if (e.key==='r') $('b-reset').click();
+});
+
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) setPaused(true);
+hud();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
