@@ -12,6 +12,11 @@ SafeLang is a programming language designed for **hard real-time, safety-critica
 
 The SafeLang compiler is not your assistant. It is your adversary. It attempts to falsify the program by searching for an input—no matter how edge-case—that violates a declared contract. Code that survives has *survived a hostile proof-of-safety*.
 
+**[Watch it run →](https://seanwevans.github.io/SafeLang/)**  A hard real-time
+control unit executing on wall time: the same control law, the same disturbance,
+run once under SafeLang's guarantees and once without them. Source in
+[`docs/`](docs/).
+
 That posture is implemented, not aspirational: `safelang --falsify` hands the
 `consume`/`emit` domains and the function body to the Z3 SMT solver and asks it
 for a counterexample. What the pass covers today, and where it stops, is spelled
